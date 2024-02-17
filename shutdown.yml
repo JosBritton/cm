@@ -1,0 +1,9 @@
+- name: "Reboot pve1"
+  hosts: "all"
+  become: true
+  tasks:
+    - name: "Reboot cluster"
+      ansible.builtin.command: /sbin/shutdown now
+
+    - name: "Wait for host"
+      local_action: wait_for host={{ ansible_ssh_host }} port=22 state=stopped

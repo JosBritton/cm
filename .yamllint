@@ -1,0 +1,61 @@
+---
+locale: "en_US.UTF-8"
+
+ignore-from-file:
+  - ".gitignore"
+
+rules:
+  anchors: "enable"
+  braces:
+    forbid: "non-empty"
+    max-spaces-inside-empty: 0
+  brackets:
+    forbid: "non-empty"
+    max-spaces-inside-empty: 0
+  colons:
+    max-spaces-before: 0
+    max-spaces-after: 1
+  commas:
+    max-spaces-before: 0
+    min-spaces-after: 1
+    max-spaces-after: 1
+  comments:
+    level: "warning"
+  comments-indentation:
+    level: "warning"
+  document-start:
+    present: true
+  document-end:
+    present: false
+  empty-lines:
+    max: 1
+    max-start: 0
+    max-end: 0
+  empty-values:
+    forbid-in-block-mappings: true
+    forbid-in-flow-mappings: true
+  float-values:
+    require-numeral-before-decimal: true
+  hyphens: "enable"
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+  key-duplicates: "enable"
+  key-ordering: "disable"
+  line-length:
+    max: 100
+    allow-non-breakable-words: true
+  new-line-at-end-of-file: "enable"
+  new-lines: "enable"
+  octal-values: "enable"
+  quoted-strings:
+    quote-type: "double"
+    required: true
+    allow-quoted-quotes: false
+  trailing-spaces: "enable"
+  truthy:
+    allowed-values:
+      - "true"
+      - "false"
+    check-keys: true

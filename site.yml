@@ -1,0 +1,17 @@
+- name: "Base"
+  hosts: "all"
+  become: true
+  tasks:
+    - name: "Update package cache"
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install qemu-guest-agent
+      ansible.builtin.apt:
+        name: "qemu-guest-agent"
+        state: "present"
+      notify: Reboot
+  handlers:
+    - name: "Reboot"
+      ansible.builtin.reboot:
