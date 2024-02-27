@@ -1,4 +1,12 @@
 # vim: ft=yaml.ansible
+
+# TODO
+# Ignore serial differences when templating.
+# Creates false positive any minute after last update.
+#
+# In case where zone is modified more than once in the same minute,
+# the change would not be implemented until next config reload at least 1 minute later.
+
 - name: "Replace Bind9 zone file: {{ zone.zone_fqdn }}"
   ansible.builtin.template:
     src: "db.zone.j2"
