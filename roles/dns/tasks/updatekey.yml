@@ -1,0 +1,17 @@
+# vim: ft=yaml.ansible
+- name: "Include secret vars"
+  ansible.builtin.include_vars:
+    file: "inventory/secrets.yml"
+
+- name: "Replace rndc key"
+  ansible.builtin.template:
+    src: "rndc-key.j2"
+    dest: "/etc/bind/ns-{{ key.zone_fqdn }}_rndc-key"
+    owner: "bind"
+    group: "bind"
+    mode: "0640"
+  loop: "{{ rndc_keys | flatten(levels=1) }}"
+  loop_control:
+    loop_var: "key"
+  when: dns_is_primary
+  no_log: true

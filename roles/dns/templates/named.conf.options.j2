@@ -1,0 +1,69 @@
+{% if dns_is_primary %}
+{% for zone in (dns_auth_zones | flatten(levels=1)) %}
+{% if zone["dynamic"] %}
+include "/etc/bind/ns-{{ zone.zone_fqdn }}_rndc-key";
+{% endif %}
+{% endfor %}
+{% endif %}
+acl "trusted" {
+{% for ac_item in trusted_acl %}
+    {{ ac_item }};
+{% endfor %}
+};
+
+options {
+    directory "/var/cache/bind";
+    version "not currently available";
+    allow-query { trusted; };
+    listen-on-v6 { any; };
+    empty-zones-enable yes;
+
+    recursion {{ "no" if dns_is_auth else "yes" }};
+    # TODO
+    dnssec-validation {{ "auto" if dns_is_auth else "no" }};
+
+{% if not dns_is_auth %}
+    forwarders {
+        127.0.0.1 port {{ dns_proxy_port }};
+    };
+{% endif %}
+};
+
+{% for zone in (dns_auth_zones | flatten(levels=1)) %}
+zone "{{ zone.zone_fqdn }}" {
+{% if dns_is_primary %}
+    type primary;
+{% if zone.dynamic %}
+    update-policy { grant {{ zone.zone_fqdn }} zonesub any; };
+{% endif %}
+    file "/var/lib/bind/db.{{ zone.zone_fqdn }}";
+    notify yes;
+    also-notify {
+{% for host in groups["ns_auth_secondary"] | map("extract", hostvars, "ansible_host") | list %}
+        {{ host }};
+{% endfor %}
+    };
+    allow-transfer {
+{% for host in groups["ns_auth_secondary"] | map("extract", hostvars, "ansible_host") | list %}
+        {{ host }};
+{% endfor %}
+    };
+{% elif dns_is_auth %}
+    type secondary;
+    file "/var/lib/bind/db.{{ zone.zone_fqdn }}";
+    primaries {
+{% for host in groups["ns_auth_primary"] | map("extract", hostvars, "ansible_host") | list %}
+        {{ host }};
+{% endfor %}
+    };
+{% else %}
+    type forward;
+    forward only;
+    forwarders {
+{% for host in groups["ns_auth"] | map("extract", hostvars, "ansible_host") | list %}
+        {{ host }};
+{% endfor %}
+    };
+{% endif %}
+};
+{% endfor %}

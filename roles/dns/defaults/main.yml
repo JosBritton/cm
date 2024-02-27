@@ -1,0 +1,5 @@
+# default vars
+dns_is_primary: false
+dns_is_auth: false
+dns_debug: false
+dns_proxy_port: 1053

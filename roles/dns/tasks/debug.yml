@@ -1,0 +1,42 @@
+# vim: ft=yaml.ansible
+- name: "DEBUG: Show var dns_auth_zones"
+  ansible.builtin.debug:
+    var: dns_auth_zones
+
+- name: "DEBUG: Render template (1)"
+  ansible.builtin.template:
+    src: "named.conf.options.j2"
+    dest: "./debug/ansibledebug_{{ inventory_hostname }}_named.conf"
+    mode: "0666"
+  delegate_to: "localhost"
+  become: false
+
+- name: "DEBUG: Render template (2)"
+  ansible.builtin.template:
+    src: "db.zone.j2"
+    dest: "./debug/ansibledebug_{{ inventory_hostname }}_db.{{ zone.zone_fqdn }}"
+    mode: "0666"
+  when: dns_is_primary
+  loop: "{{ dns_auth_zones | flatten(levels=1) }}"
+  loop_control:
+    loop_var: "zone"
+  delegate_to: "localhost"
+  become: false
+
+- name: "DEBUG: Render template (3)"
+  when: dns_is_auth
+  ansible.builtin.template:
+    src: "named.conf.options.j2"
+    dest: "{{ config.dest }}"
+    mode: "0666"
+  vars:
+    dns_is_primary: "{{ config.active }}"
+  loop:
+    - active: true
+      dest: "./debug/ansibledebug_{{ inventory_hostname }}_named.conf.active"
+    - active: false
+      dest: "./debug/ansibledebug_{{ inventory_hostname }}_named.conf.standby"
+  loop_control:
+    loop_var: "config"
+  delegate_to: "localhost"
+  become: false

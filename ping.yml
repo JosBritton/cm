@@ -3,4 +3,4 @@
   become: true
   tasks:
     - name: "Ping all machines"
-      ansible.builtin.ping:
+      ansible.builtin.ping: {}

@@ -1,0 +1,15 @@
+[Unit]
+Description=DNS over HTTPS (DoH) proxy client
+Wants=network-online.target nss-lookup.target
+Before=nss-lookup.target
+
+[Service]
+DynamicUser=yes
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
+RemoveIPC=yes
+ExecStart=/usr/local/bin/cloudflared proxy-dns --port {{ dns_proxy_port }}
+
+[Install]
+WantedBy=multi-user.target
