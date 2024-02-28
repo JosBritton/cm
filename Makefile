@@ -13,6 +13,11 @@ install: lint .venv/lock
 	. .venv/bin/activate && \
 	python3 -m ansible playbook -i inventory/hosts.yml site.yml
 
+.PHONY: verbose
+verbose: lint .venv/lock
+	. .venv/bin/activate && \
+	python3 -m ansible playbook -i inventory/hosts.yml site.yml -vvv
+
 .PHONY: lint
 lint: .venv/lock .git/hooks/pre-commit
 	. ./.venv/bin/activate && \
