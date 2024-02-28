@@ -13,5 +13,4 @@
   loop: "{{ rndc_keys | flatten(levels=1) }}"
   loop_control:
     loop_var: "key"
-  when: dns_is_primary
   no_log: true

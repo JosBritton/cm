@@ -1,128 +1,61 @@
 # vim: ft=yaml.ansible
-- name: "Include debug tasks"
+- name: "Include debug tasks [0] "
   ansible.builtin.include_tasks:
     file: debug.yml
   when: dns_debug
 
-- name: "Install Bind9 server and test utilities"
-  ansible.builtin.apt:
-    name:
-      - "bind9"
-      - "bind9-dnsutils"
-    state: "present"
-
-- name: "Install DNS-Over-Https stub resolver (cloudflared)"
-  when: not dns_is_auth
-  ansible.builtin.include_tasks:
-    file: cloudflared.yml
-
-- name: "Include alternate standby and active multi-master configs"
-  when: (not dns_debug) and dns_is_auth
-  ansible.builtin.template:
-    src: "named.conf.options.j2"
-    dest: "{{ namedconf.dest }}"
-    owner: "root"
-    group: "bind"
-    mode: "0644"
-  vars:
-    dns_is_primary: "{{ namedconf.active }}"
-  loop:
-    - active: true
-      dest: "/etc/bind/named.conf.active"
-    - active: false
-      dest: "/etc/bind/named.conf.standby"
-  loop_control:
-    loop_var: "namedconf"
-
-- name: "Include secrets"
-  ansible.builtin.include_vars:
-    file: "inventory/secrets.yml"
-  no_log: true
-
-- name: "Replace Bind9 zone update key"
-  ansible.builtin.include_tasks:
-    file: "updatekey.yml"
-  when: dns_is_primary
-
-- name: "Replace Bind9 server configuration"
-  ansible.builtin.template:
-    src: "named.conf.options.j2"
-    dest: "/etc/bind/named.conf.options"
-    owner: "root"
-    group: "bind"
-    mode: "0644"
-  register: config_file_mock
-  check_mode: true
+- name: "Provision DNS server"
   when: not dns_debug
-
-- name: "Replace Bind9 running server configuration"
-  when: (not dns_debug) and config_file_mock.changed
   block:
-    - name: "Freeze any dynamic zones pending server restart"
-      ansible.builtin.command:
-        cmd: "rndc freeze"
-      changed_when: true
+    - name: "Install Bind9 server and test utilities [1] "
+      ansible.builtin.apt:
+        name:
+          - "bind9"
+          - "bind9-dnsutils"
+        state: "present"
 
-    - name: "Block"
-      block:
-        - name: "Overwrite named configuration"
-          ansible.builtin.template:
-            src: "named.conf.options.j2"
-            dest: "/etc/bind/named.conf.options"
-            owner: "root"
-            group: "bind"
-            mode: "0644"
-            backup: true  # returns: "backup_file" attr
-          register: "config_file"
+    - name: "Install DNS-Over-Https stub resolver (cloudflared) [2] "
+      when: not dns_is_auth
+      ansible.builtin.include_tasks:
+        file: cloudflared.yml
 
-        - name: "Restart Bind9 service"
-          ansible.builtin.systemd:
-            name: "named.service"
-            state: "restarted"
-      rescue:
-        - name: "Print service logs"
-          ansible.builtin.command:
-            cmd: "journalctl -u service-name.service -b"
-          changed_when: false
+    - name: "Include alternate standby and active multi-master configs [3] "
+      when: (not dns_debug) and dns_is_auth
+      ansible.builtin.template:
+        src: "named.conf.options.j2"
+        dest: "{{ namedconf.dest }}"
+        owner: "root"
+        group: "bind"
+        mode: "0644"
+      vars:
+        dns_is_primary: "{{ namedconf.active }}"
+      loop:
+        - active: true
+          dest: "/etc/bind/named.conf.active"
+        - active: false
+          dest: "/etc/bind/named.conf.standby"
+      loop_control:
+        loop_var: "namedconf"
 
-        - name: "Restore previous configuration"
-          ansible.builtin.copy:
-            remote_src: true
-            src: config_file.backup_file
-            dest: "/etc/bind/named.conf.options"
-            owner: "root"
-            group: "bind"
-            mode: "0644"
+    - name: "Replace Bind9 zone update key [4] "
+      ansible.builtin.include_tasks:
+        file: "updatekey.yml"
+      when: dns_is_primary
 
-        - name: "Restart Bind9 service"
-          ansible.builtin.systemd:
-            name: "named.service"
-            state: "restarted"
-      always:
-        - name: "Remove temporary backup file"
-          ansible.builtin.file:
-            path: "{{ config_file.backup_file }}"
-            state: "absent"
+    - name: "Replace Bind9 server configuration [5] "
+      ansible.builtin.include_tasks:
+        file: "updatenamed.yml"
 
-    - name: "Load new zones and remove any undefined zones"
-      ansible.builtin.command:
-        cmd: "rndc reconfig"
-      changed_when: false
+    - name: "Update zone files [6] "
+      ansible.builtin.include_tasks:
+        file: "updatezone.yaml"
+      loop: "{{ dns_auth_zones | flatten(levels=1) }}"
+      loop_control:
+        loop_var: "zone"
+      when: dns_is_primary
 
-    - name: "Thaw any dynamic zones now that server is online"
-      ansible.builtin.command:
-        cmd: "rndc thaw"
-      changed_when: true
-
-- name: "Update primary zone files"
-  ansible.builtin.include_tasks:
-    file: "updatezone.yaml"
-  loop: "{{ dns_auth_zones | flatten(levels=1) }}"
-  loop_control:
-    loop_var: "zone"
-
-- name: "Enable and start Bind9 service"
-  ansible.builtin.systemd:
-    name: "named.service"
-    state: "started"
-    enabled: true
+    - name: "Enable and start Bind9 service [6] "
+      ansible.builtin.systemd:
+        name: "named.service"
+        state: "started"
+        enabled: true
