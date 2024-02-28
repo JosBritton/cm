@@ -1,0 +1,133 @@
+# vim: ft=yaml.ansible
+- name: "Clear zone state fact {{ zone.zone_fqdn }}"
+  ansible.builtin.set_fact:
+    zone_update: false
+
+- name: "Create state folder on the Ansible controller {{ zone.zone_fqdn }}"
+  ansible.builtin.file:
+    path: ".state/"
+    state: "directory"
+    mode: "0744"
+  become: false
+  delegate_to: "localhost"
+
+- name: "Get stats of zone statefile on disk {{ zone.zone_fqdn }}"
+  ansible.builtin.stat:
+    path: "{{(playbook_dir ~ '/.state/' ~ zone.zone_fqdn ~ '.yml')}}"
+  become: false
+  delegate_to: "localhost"
+  register: "zone_statefile_stats"
+
+- name: "Include zone statefile from last update {{ zone.zone_fqdn }}"
+  when: zone_statefile_stats.stat.isreg is defined and zone_statefile_stats.stat.isreg
+  block:
+    - name: "Include zone statefile from last update {{ zone.zone_fqdn }}"
+      ansible.builtin.include_vars:
+        file: "{{ zone_statefile_stats.stat.path }}"
+
+    - name: "Assert that expected variables were importred from statefile {{ zone.zone_fqdn }}"
+      ansible.builtin.assert:
+        that:
+          - zone_state_store is defined
+          - zone_state_store is string
+          - zone_iteration_store is defined
+          - (zone_iteration_store | type_debug == "int")
+        quiet: true
+
+- name: "Initialize iteration count {{ zone.zone_fqdn }}"
+  ansible.builtin.set_fact:
+    zone_iteration_store: 0
+  when: zone_statefile_stats.stat.isreg is not defined
+
+- name: "Template out zone mockfile to remote tmpfs {{ zone.zone_fqdn }}"
+  ansible.builtin.template:
+    src: "mock.zone.j2"
+    dest: "/tmp/mock_zone"
+    mode: "0644"
+    force: true
+  register: "mockfile"
+  changed_when: false
+
+- name: "Slurp contents of zone mockfile on remote tmpfs {{ zone.zone_fqdn }}"
+  ansible.builtin.slurp:
+    path: "{{ mockfile.dest }}"
+  register: "zone_state_current"
+
+- name: "Update zone state {{ zone.zone_fqdn }}"
+  ansible.builtin.set_fact:
+    zone_update: true
+    zone_state: "{{ zone_state_current.content }}"
+    zone_iteration: "{{ zone_iteration_store + 1 }}"
+  when: (zone_state_store is not defined) or (zone_state_store != zone_state_current.content)
+
+- name: "Update Bind9 zone data {{ zone.zone_fqdn }}"
+  when: zone_update
+  block:
+    - name: "Update zone file {{ zone.zone_fqdn }}"
+      block:
+        - name: "Write zone file on disk {{ zone.zone_fqdn }}"  # must be first task in block
+          ansible.builtin.template:
+            src: "db.zone.j2"
+            dest: "/var/lib/bind/db.{{ zone.zone_fqdn }}"
+            owner: "bind"
+            group: "bind"
+            mode: "0644"
+            force: true
+            backup: true
+          register: "zone_file"
+          vars:
+            zone_serial: "{{ zone_iteration }}"
+
+        - name: "Reload zone {{ zone.zone_fqdn }}"
+          ansible.builtin.command:
+            cmd: "rndc reload {{ zone.zone_fqdn }}"
+          changed_when: true
+      rescue:
+        - name: "Restore previous configuration {{ zone.zone_fqdn }}"
+          ansible.builtin.copy:
+            remote_src: true
+            src: "{{ zone_file.backup_file }}"
+            dest: "/var/lib/bind/db.{{ zone.zone_fqdn }}"
+            owner: "bind"
+            group: "bind"
+            mode: "0644"
+      always:
+        - name: "Remove temporary backup file {{ zone.zone_fqdn }}"
+          ansible.builtin.file:
+            path: "{{ zone_file.backup_file }}"
+            state: "absent"
+          when: zone_file.backup_file is defined
+
+    - name: "Write new state to statefile {{ zone.zone_fqdn }}"
+      ansible.builtin.template:
+        src: "statefile.j2"
+        dest: ".state/{{ zone.zone_fqdn }}.yml"
+        mode: "0644"
+        force: true
+      become: false
+      delegate_to: "localhost"
+      vars:
+        state: "{{ zone_state }}"
+        iteration: "{{ zone_iteration }}"
+
+- name: "Remove temporary mockfile {{ zone.zone_fqdn }}"
+  ansible.builtin.file:
+    path: "{{ mockfile.dest }}"
+    state: "absent"
+  changed_when: false
+
+- name: "Show debug messages {{ zone.zone_fqdn }}"
+  when: dns_debug
+  block:
+    - name: "DEBUG show zone_state_store {{ zone.zone_fqdn }}"
+      ansible.builtin.debug:
+        msg: "{{ zone_state_store }}"
+      when: zone_state_store is defined
+
+    - name: "DEBUG show zone_state_current {{ zone.zone_fqdn }}"
+      ansible.builtin.debug:
+        msg: "{{ zone_state_current.content }}"
+
+    - name: "DEBUG show mockfile content {{ zone.zone_fqdn }}"
+      ansible.builtin.debug:
+        msg: "{{ zone_state_current.content | b64decode }}"

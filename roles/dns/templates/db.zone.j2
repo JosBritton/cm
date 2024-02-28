@@ -1,7 +1,7 @@
 $ORIGIN .
 $TTL {{ zone.ttl_seconds }}
 {{ zone.zone_fqdn }} IN SOA {{ inventory_hostname }}. root.{{ zone.zone_fqdn }}. (
-        {{ '%Y%m%d%M' | strftime }}
+        {{ zone_serial }}{# {{ '%Y%m%d%M' | strftime }} #}
         {{ zone.soa.refresh_ttl_seconds }}
         {{ zone.soa.retry_ttl_seconds }}
         {{ zone.soa.expire_ttl_seconds }}
