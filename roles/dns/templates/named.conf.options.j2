@@ -39,12 +39,12 @@ zone "{{ zone.zone_fqdn }}" {
     file "/var/lib/bind/db.{{ zone.zone_fqdn }}";
     notify yes;
     also-notify {
-{% for host in groups["ns_auth_secondary"] | map("extract", hostvars, "ansible_host") | list %}
+{% for host in groups["ns_auth_secondary"] | map("extract", hostvars, "ansible_default_ipv4") | map(attribute="address") %}
         {{ host }};
 {% endfor %}
     };
     allow-transfer {
-{% for host in groups["ns_auth_secondary"] | map("extract", hostvars, "ansible_host") | list %}
+{% for host in groups["ns_auth_secondary"] | map("extract", hostvars, "ansible_default_ipv4") | map(attribute="address") %}
         {{ host }};
 {% endfor %}
     };
@@ -52,7 +52,7 @@ zone "{{ zone.zone_fqdn }}" {
     type secondary;
     file "/var/lib/bind/db.{{ zone.zone_fqdn }}";
     primaries {
-{% for host in groups["ns_auth_primary"] | map("extract", hostvars, "ansible_host") | list %}
+{% for host in groups["ns_auth_primary"] | map("extract", hostvars, "ansible_default_ipv4") | map(attribute="address") %}
         {{ host }};
 {% endfor %}
     };
@@ -60,7 +60,7 @@ zone "{{ zone.zone_fqdn }}" {
     type forward;
     forward only;
     forwarders {
-{% for host in groups["ns_auth"] | map("extract", hostvars, "ansible_host") | list %}
+{% for host in groups["ns_auth"] | map("extract", hostvars, "ansible_default_ipv4") | map(attribute="address") %}
         {{ host }};
 {% endfor %}
     };
