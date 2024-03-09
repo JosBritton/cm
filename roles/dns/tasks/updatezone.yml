@@ -135,19 +135,3 @@
     path: "{{ mockfile.dest }}"
     state: "absent"
   changed_when: false
-
-- name: "Show debug messages {{ zone.zone_fqdn }}"
-  when: dns_debug
-  block:
-    - name: "DEBUG show zone_state_store {{ zone.zone_fqdn }}"
-      ansible.builtin.debug:
-        msg: "{{ zone_state_store }}"
-      when: zone_state_store is defined
-
-    - name: "DEBUG show zone_state_current {{ zone.zone_fqdn }}"
-      ansible.builtin.debug:
-        msg: "{{ zone_state_current.content }}"
-
-    - name: "DEBUG show mockfile content {{ zone.zone_fqdn }}"
-      ansible.builtin.debug:
-        msg: "{{ zone_state_current.content | b64decode }}"
