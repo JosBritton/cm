@@ -1,0 +1,68 @@
+# vim: ft=yaml.ansible
+- name: "Install Kea DHCP server"
+  ansible.builtin.apt:
+    name:
+      - "kea"
+    state: "present"
+    cache_valid_time: 3600
+
+- name: "Update Kea DHCP control agent configuration file"
+  ansible.builtin.template:
+    src: "kea-ctrl-agent.conf.j2"
+    dest: "/etc/kea/kea-ctrl-agent.conf"
+    mode: "0644"
+    owner: "root"
+    group: "root"
+  notify:
+    - "Restart Kea DHCP4 server"
+    - "Restart Kea control agent"
+
+- name: "Update Kea DHCP4 configuration file"
+  ansible.builtin.template:
+    src: "kea-dhcp4.conf.j2"
+    dest: "/etc/kea/kea-dhcp4.conf"
+    mode: "0644"
+    owner: "root"
+    group: "root"
+  notify:
+    - "Restart Kea DHCP4 server"
+    - "Restart Kea DHCP DDNS server"
+
+- name: "Update Kea DHCP6 configuration file"
+  ansible.builtin.template:
+    src: "kea-dhcp6.conf.j2"
+    dest: "/etc/kea/kea-dhcp6.conf"
+    mode: "0644"
+    owner: "root"
+    group: "root"
+  notify:
+    - "Restart Kea DHCP6 server"
+    - "Restart Kea DHCP DDNS server"
+
+- name: "Update Kea DDNS config"
+  ansible.builtin.include_tasks:
+    file: "ddns.yml"
+
+- name: "Start and enable Kea DHCP4 server"
+  ansible.builtin.systemd:
+    name: "kea-dhcp4-server.service"
+    state: "started"
+    enabled: true
+
+- name: "Start and enable Kea DDNS server"
+  ansible.builtin.systemd:
+    name: "kea-dhcp-ddns-server.service"
+    state: "started"
+    enabled: true
+
+- name: "Start and enable Kea control agent"
+  ansible.builtin.systemd:
+    name: "kea-ctrl-agent.service"
+    state: "started"
+    enabled: true
+
+- name: "Stop and disable Kea DHCP6 server"
+  ansible.builtin.systemd:
+    name: "kea-dhcp6-server.service"
+    state: "stopped"
+    enabled: false
