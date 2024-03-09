@@ -1,0 +1,16 @@
+"tsig-keys": [
+{% for key in rndc_keys.zone_keys | flatten(levels=1) %}
+    {
+        "name": "{{ key.zone_fqdn }}",
+        "algorithm": "{{ key.algorithm }}",
+        "secret": "{{ key.secret }}"
+    },
+{% endfor %}
+{% for key in rndc_keys.reverse_zone_keys | flatten(levels=1) %}
+    {
+        "name": "{{ key.zone_fqdn }}",
+        "algorithm": "{{ key.algorithm }}",
+        "secret": "{{ key.secret }}"
+    },
+{% endfor %}
+],

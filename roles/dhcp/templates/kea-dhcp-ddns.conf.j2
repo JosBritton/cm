@@ -1,0 +1,52 @@
+{
+    "DhcpDdns": {
+        "ip-address": "127.0.0.1",
+        "port": 53001,
+        "control-socket": {
+            "socket-type": "unix",
+            "socket-name": "/run/kea/kea-ddns-ctrl-socket"
+        },
+        <?include "/etc/kea/kea-dhcp-ddns-key.conf"?>
+        "forward-ddns": {
+            "ddns-domains": [
+{% for key in rndc_keys.zone_keys | flatten(levels=1) %}
+                {
+                "name": "{{ key.zone_fqdn }}.",
+                "key-name": "{{ key.zone_fqdn}}",
+                "dns-servers": [
+{% for host in groups["ns_auth_primary"] | map("extract", hostvars, "ansible_default_ipv4") | map(attribute="address") %}
+                    { "ip-address": "{{ host }}" },
+{% endfor %}
+                ]},
+{% endfor %}
+            ]
+        },
+        "reverse-ddns": {
+            "ddns-domains": [
+{% for key in rndc_keys.reverse_zone_keys | flatten(levels=1) %}
+                {
+                "name": "{{ key.zone_fqdn }}.",
+                "key-name": "{{ key.zone_fqdn}}",
+                "dns-servers": [
+{% for host in groups["ns_auth_primary"] | map("extract", hostvars, "ansible_default_ipv4") | map(attribute="address") %}
+                    { "ip-address": "{{ host }}" },
+{% endfor %}
+                ]},
+{% endfor %}
+            ]
+        },
+        "loggers": [
+            {
+                "name": "kea-dhcp-ddns",
+                "output_options": [
+                    {
+                        "output": "stdout",
+                        "pattern": "%-5p %m\n"
+                    }
+                ],
+                "severity": "INFO",
+                "debuglevel": 0
+            }
+        ]
+    }
+}
