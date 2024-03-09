@@ -1,0 +1,21 @@
+# vim: ft=yaml.ansible
+- name: "Include secrets"
+  ansible.builtin.include_vars:
+    file: "inventory/secrets.yml"
+
+- name: "Get list of RNDC keys"
+  ansible.builtin.set_fact:
+    rndc_key_list: "{{ rndc_keys.zone_keys | map(attribute='zone_fqdn') + rndc_keys.reverse_zone_keys | map(attribute='zone_fqdn') }}"
+
+- name: "Ensure that every dynamic authoritative zone specified has a corresponding TSIG key"
+  ansible.builtin.assert:
+    that:
+      - (not zone.dynamic) or (zone.zone_fqdn in rndc_key_list)
+    fail_msg: |
+      TSIG key for dynamic zone '{{ zone.zone_fqdn }}' not found in secrets.yml.
+      Did you forget to add it?
+  loop: "{{ dns_auth_zones }}"
+  loop_control:
+    loop_var: "zone"
+    label: "{{ zone.zone_fqdn }}"
+  no_log: true
