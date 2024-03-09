@@ -18,6 +18,12 @@ options {
     listen-on-v6 { any; };
     empty-zones-enable yes;
 
+{% if disable_empty_zones is defined %}
+{% for empty_zone in disable_empty_zones %}
+    disable-empty-zone "{{ empty_zone }}";
+{% endfor %}
+{% endif %}
+
     recursion {{ "no" if dns_is_auth else "yes" }};
     # TODO
     dnssec-validation {{ "auto" if dns_is_auth else "no" }};
