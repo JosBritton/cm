@@ -1,7 +1,8 @@
 # vim: ft=yaml.ansible
-- name: "Clear zone state fact {{ zone.zone_fqdn }}"
+- name: "Set facts {{ zone.zone_fqdn }}"
   ansible.builtin.set_fact:
     zone_update: false
+    owner: "{{ zone.dynamic | ansible.builtin.ternary('bind', 'root') }}"
 
 - name: "Create state folder on the Ansible controller {{ zone.zone_fqdn }}"
   ansible.builtin.file:
@@ -65,14 +66,20 @@
   block:
     - name: "Update zone file {{ zone.zone_fqdn }}"
       block:
-        - name: "Write zone file on disk {{ zone.zone_fqdn }}"  # must be first task in block
+        - name: "Freeze zone file on disk {{ zone.zone_fqdn }}"
+          ansible.builtin.command:
+            cmd: "rndc freeze '{{ zone.zone_fqdn }}'"
+          changed_when: false
+          when: zone.dynamic
+
+        - name: "Write zone file on disk {{ zone.zone_fqdn }}"
           ansible.builtin.template:
             src: "db.zone.j2"
             dest: "/var/lib/bind/db.{{ zone.zone_fqdn }}"
-            owner: "bind"
-            group: "bind"
+            owner: "{{ owner }}"
+            group: "{{ owner }}"
             mode: "0644"
-            force: true
+            force: "{{ not zone.dynamic }}"
             backup: true
           register: "zone_file"
           vars:
@@ -80,17 +87,30 @@
 
         - name: "Reload zone {{ zone.zone_fqdn }}"
           ansible.builtin.command:
-            cmd: "rndc reload {{ zone.zone_fqdn }}"
+            cmd: "rndc reload '{{ zone.zone_fqdn }}'"
           changed_when: true
+          when: not zone.dynamic
+
+        - name: "Thaw zone file on disk {{ zone.zone_fqdn }}"
+          ansible.builtin.command:
+            cmd: "rndc thaw '{{ zone.zone_fqdn }}'"
+          changed_when: false
+          when: zone.dynamic
       rescue:
         - name: "Restore previous configuration {{ zone.zone_fqdn }}"
           ansible.builtin.copy:
             remote_src: true
             src: "{{ zone_file.backup_file }}"
             dest: "/var/lib/bind/db.{{ zone.zone_fqdn }}"
-            owner: "bind"
-            group: "bind"
+            owner: "{{ owner }}"
+            group: "{{ owner }}"
             mode: "0644"
+          when: zone_file.backup_file is defined
+
+        - name: "Restart service"
+          ansible.builtin.systemd:
+            name: "named.service"
+            state: "restarted"
       always:
         - name: "Remove temporary backup file {{ zone.zone_fqdn }}"
           ansible.builtin.file:
