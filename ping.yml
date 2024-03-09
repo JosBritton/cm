@@ -1,6 +1,0 @@
-- name: "Ping all machines"
-  hosts: "all"
-  become: true
-  tasks:
-    - name: "Ping all machines"
-      ansible.builtin.ping: {}

@@ -1,6 +1,0 @@
-- name: "Reboot pve1"
-  hosts: "all"
-  become: true
-  tasks:
-    - name: "Reboot cluster"
-      ansible.builtin.reboot: {}

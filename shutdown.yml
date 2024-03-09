@@ -1,8 +1,0 @@
-- name: "Reboot pve1"
-  hosts: "all"
-  become: true
-  tasks:
-    - name: "Shutdown cluster"
-      ansible.builtin.command:
-        cmd: "/sbin/shutdown now"
-      changed_when: false
