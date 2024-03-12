@@ -18,7 +18,7 @@
   loop_control:
     loop_var: "zone"
     label: "{{ zone.zone_fqdn }}"
-  no_log: true
+  no_log: "{{ not log_secrets }}"
 
 - name: "Ensure that every static authoritative zone soa has a defined serial number"
   ansible.builtin.assert:
@@ -29,4 +29,4 @@
     loop_var: "zone"
     label: "{{ zone.zone_fqdn }}"
   when: not zone.dynamic
-  no_log: true
+  no_log: "{{ not log_secrets }}"
