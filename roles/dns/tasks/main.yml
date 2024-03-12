@@ -50,13 +50,14 @@
       ansible.builtin.include_tasks:
         file: "updatenamed.yml"
 
-    - name: "Update zone files [6] "
+    - name: "Update static Bind9 zonefile"
       ansible.builtin.include_tasks:
         file: "updatezone.yml"
       loop: "{{ dns_auth_zones | flatten(levels=1) }}"
       loop_control:
+        label: "{{ zone.zone_fqdn }}"
         loop_var: "zone"
-      when: dns_is_primary  # and (not zone.dynamic)
+      when: dns_is_primary and (not zone.dynamic)
 
     - name: "Enable and start Bind9 service [7] "
       ansible.builtin.systemd:

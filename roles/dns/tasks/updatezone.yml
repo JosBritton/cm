@@ -1,137 +1,58 @@
 # vim: ft=yaml.ansible
-- name: "Set facts {{ zone.zone_fqdn }}"
-  ansible.builtin.set_fact:
-    zone_update: false
-    owner: "{{ zone.dynamic | ansible.builtin.ternary('bind', 'root') }}"
-
-- name: "Create state folder on the Ansible controller {{ zone.zone_fqdn }}"
-  ansible.builtin.file:
-    path: ".state/"
-    state: "directory"
-    mode: "0744"
-  become: false
-  delegate_to: "localhost"
-
-- name: "Get stats of zone statefile on disk {{ zone.zone_fqdn }}"
-  ansible.builtin.stat:
-    path: "{{(playbook_dir ~ '/.state/' ~ zone.zone_fqdn ~ '.yml')}}"
-  become: false
-  delegate_to: "localhost"
-  register: "zone_statefile_stats"
-
-- name: "Include zone statefile from last update {{ zone.zone_fqdn }}"
-  when: zone_statefile_stats.stat.isreg is defined and zone_statefile_stats.stat.isreg
+- name: "Update static Bind9 zonefile, "
   block:
-    - name: "Include zone statefile from last update {{ zone.zone_fqdn }}"
-      ansible.builtin.include_vars:
-        file: "{{ zone_statefile_stats.stat.path }}"
-
-    - name: "Assert that expected variables were importred from statefile {{ zone.zone_fqdn }}"
-      ansible.builtin.assert:
-        that:
-          - zone_state_store is defined
-          - zone_state_store is string
-          - zone_iteration_store is defined
-          - (zone_iteration_store | type_debug == "int")
-        quiet: true
-
-- name: "Initialize iteration count {{ zone.zone_fqdn }}"
-  ansible.builtin.set_fact:
-    zone_iteration_store: 0
-  when: zone_statefile_stats.stat.isreg is not defined
-
-- name: "Template out zone mockfile to remote tmpfs {{ zone.zone_fqdn }}"
-  ansible.builtin.template:
-    src: "mock.zone.j2"
-    dest: "/tmp/mock_zone"
-    mode: "0644"
-    force: true
-  register: "mockfile"
-  changed_when: false
-
-- name: "Slurp contents of zone mockfile on remote tmpfs {{ zone.zone_fqdn }}"
-  ansible.builtin.slurp:
-    path: "{{ mockfile.dest }}"
-  register: "zone_state_current"
-
-- name: "Update zone state {{ zone.zone_fqdn }}"
-  ansible.builtin.set_fact:
-    zone_update: true
-    zone_state: "{{ zone_state_current.content }}"
-    zone_iteration: "{{ zone_iteration_store + 1 }}"
-  when: (zone_state_store is not defined) or (zone_state_store != zone_state_current.content)
-
-- name: "Update Bind9 zone data {{ zone.zone_fqdn }}"
-  when: zone_update
-  block:
-    - name: "Update zone file {{ zone.zone_fqdn }}"
-      block:
-        - name: "Freeze zone file on disk {{ zone.zone_fqdn }}"
-          ansible.builtin.command:
-            cmd: "rndc freeze '{{ zone.zone_fqdn }}'"
-          changed_when: false
-          when: zone.dynamic
-
-        - name: "Write zone file on disk {{ zone.zone_fqdn }}"
-          ansible.builtin.template:
-            src: "db.zone.j2"
-            dest: "/var/lib/bind/db.{{ zone.zone_fqdn }}"
-            owner: "{{ owner }}"
-            group: "{{ owner }}"
-            mode: "0644"
-            force: "{{ not zone.dynamic }}"
-            backup: true
-          register: "zone_file"
-          vars:
-            zone_serial: "{{ zone_iteration }}"
-
-        - name: "Reload zone {{ zone.zone_fqdn }}"
-          ansible.builtin.command:
-            cmd: "rndc reload '{{ zone.zone_fqdn }}'"
-          changed_when: true
-          when: not zone.dynamic
-
-        - name: "Thaw zone file on disk {{ zone.zone_fqdn }}"
-          ansible.builtin.command:
-            cmd: "rndc thaw '{{ zone.zone_fqdn }}'"
-          changed_when: false
-          when: zone.dynamic
-      rescue:
-        - name: "Restore previous configuration {{ zone.zone_fqdn }}"
-          ansible.builtin.copy:
-            remote_src: true
-            src: "{{ zone_file.backup_file }}"
-            dest: "/var/lib/bind/db.{{ zone.zone_fqdn }}"
-            owner: "{{ owner }}"
-            group: "{{ owner }}"
-            mode: "0644"
-          when: zone_file.backup_file is defined
-
-        - name: "Restart service"
-          ansible.builtin.systemd:
-            name: "named.service"
-            state: "restarted"
-      always:
-        - name: "Remove temporary backup file {{ zone.zone_fqdn }}"
-          ansible.builtin.file:
-            path: "{{ zone_file.backup_file }}"
-            state: "absent"
-          when: zone_file.backup_file is defined
-
-    - name: "Write new state to statefile {{ zone.zone_fqdn }}"
+    - name: "Write zone file on disk"
       ansible.builtin.template:
-        src: "statefile.j2"
-        dest: ".state/{{ zone.zone_fqdn }}.yml"
+        src: "db.zone.j2"
+        dest: "/var/lib/bind/db.{{ zone.zone_fqdn }}"
+        owner: "root"
+        group: "root"
         mode: "0644"
         force: true
-      become: false
-      delegate_to: "localhost"
-      vars:
-        state: "{{ zone_state }}"
-        iteration: "{{ zone_iteration }}"
+        backup: true
+      register: "zone_file"
 
-- name: "Remove temporary mockfile {{ zone.zone_fqdn }}"
-  ansible.builtin.file:
-    path: "{{ mockfile.dest }}"
-    state: "absent"
-  changed_when: false
+    - name: "Reload zone"
+      ansible.builtin.command:
+        cmd: "rndc reload '{{ zone.zone_fqdn }}'"
+      when: zone_file is changed
+      changed_when: true
+      tags:
+        - "skip_ansible_lint"
+
+    - name: "Get zone status"
+      ansible.builtin.command:
+        cmd: "rndc zonestatus '{{ zone.zone_fqdn }}'"
+      changed_when: false
+  rescue:
+    - name: "Restore previous configuration"
+      ansible.builtin.copy:
+        remote_src: true
+        src: "{{ zone_file.backup_file }}"
+        dest: "/var/lib/bind/db.{{ zone.zone_fqdn }}"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+      when: zone_file is changed
+      tags:
+        - "skip_ansible_lint"
+
+    # rndc not active in-case of server error
+    - name: "Restart service"
+      ansible.builtin.systemd:
+        name: "named.service"
+        state: "restarted"
+      when: zone_file is changed
+      tags:
+        - "skip_ansible_lint"
+
+    - name: "Get zone status"
+      ansible.builtin.command:
+        cmd: "rndc zonestatus '{{ zone.zone_fqdn }}'"
+      changed_when: false
+  always:
+    - name: "Remove temporary backup file"
+      ansible.builtin.file:
+        path: "{{ zone_file.backup_file }}"
+        state: "absent"
+      when: zone_file.backup_file is defined

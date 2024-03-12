@@ -35,7 +35,6 @@ lint: .venv/lock .git/hooks/pre-commit
 .PHONY: clean
 clean:
 	rm -rf .venv/
-	rm -rf .state/
 
 .venv/lock: requirements.txt
 	python3 -m venv .venv/
