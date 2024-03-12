@@ -13,7 +13,7 @@
   loop: "{{ rndc_keys.zone_keys | flatten(levels=1) }}"
   loop_control:
     loop_var: "key"
-  no_log: true
+  no_log: "{{ not log_secrets }}"
 
 - name: "Update reverse RNDC keys"
   ansible.builtin.template:
@@ -25,4 +25,4 @@
   loop: "{{ rndc_keys.reverse_zone_keys | flatten(levels=1) }}"
   loop_control:
     loop_var: "key"
-  no_log: true
+  no_log: "{{ not log_secrets }}"
