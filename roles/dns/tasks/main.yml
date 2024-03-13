@@ -1,29 +1,29 @@
 # vim: ft=yaml.ansible
-- name: "Include debug tasks [0] "
+- name: "Include debug tasks"
   ansible.builtin.include_tasks:
     file: debug.yml
   when: dns_debug
 
-- name: "Perform inventory validation for role [1] "
+- name: "Perform inventory validation for role"
   ansible.builtin.include_tasks:
     file: "validate.yml"
 
 - name: "Provision DNS server"
   when: not dns_debug
   block:
-    - name: "Install Bind9 server and test utilities [2] "
+    - name: "Install Bind9 server and test utilities"
       ansible.builtin.apt:
         name:
           - "bind9"
           - "bind9-dnsutils"
         state: "present"
 
-    - name: "Install DNS-Over-Https stub resolver (cloudflared) [3] "
+    - name: "Install DNS-Over-Https stub resolver (cloudflared)"
       when: not dns_is_auth
       ansible.builtin.include_tasks:
         file: cloudflared.yml
 
-    - name: "Include alternate standby and active multi-master configs [4] "
+    - name: "Include alternate standby and active multi-master configs"
       when: (not dns_debug) and dns_is_auth
       ansible.builtin.template:
         src: "named.conf.options.j2"
@@ -41,12 +41,12 @@
       loop_control:
         loop_var: "namedconf"
 
-    - name: "Replace Bind9 zone update key [5] "
+    - name: "Replace Bind9 zone update key"
       ansible.builtin.include_tasks:
         file: "updatekey.yml"
       when: dns_is_primary
 
-    - name: "Replace Bind9 server configuration [6] "
+    - name: "Replace Bind9 server configuration"
       ansible.builtin.include_tasks:
         file: "updatenamed.yml"
 
@@ -59,7 +59,7 @@
         loop_var: "zone"
       when: dns_is_primary and (not zone.dynamic)
 
-    - name: "Enable and start Bind9 service [7] "
+    - name: "Enable and start Bind9 service"
       ansible.builtin.systemd:
         name: "named.service"
         state: "started"
