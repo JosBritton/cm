@@ -34,7 +34,7 @@ zone "{{ zone.zone_fqdn }}" {
 {% if dns_is_primary %}
     type primary;
 {% if zone.dynamic %}
-    update-policy { grant {{ zone.zone_fqdn }} zonesub {{ zone.dynamic_update_policy }}; };
+    update-policy { grant {{ zone.zone_fqdn }} zonesub any; };
 {% endif %}
     file "/var/lib/bind/db.{{ zone.zone_fqdn }}";
     notify yes;
