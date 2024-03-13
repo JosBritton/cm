@@ -7,7 +7,7 @@
   ansible.builtin.set_fact:
     rndc_key_list: "{{ rndc_keys.zone_keys | map(attribute='zone_fqdn') + rndc_keys.reverse_zone_keys | map(attribute='zone_fqdn') }}"
 
-- name: "Ensure that every dynamic authoritative zone specified has a corresponding TSIG key or is static"
+- name: "Ensure that every dynamic authoritative zone specified has a corresponding TSIG key"
   ansible.builtin.assert:
     that:
       - (not zone.dynamic) or (zone.zone_fqdn in rndc_key_list)
@@ -18,15 +18,4 @@
   loop_control:
     loop_var: "zone"
     label: "{{ zone.zone_fqdn }}"
-  no_log: true
-
-- name: "Ensure that every static authoritative zone soa has a defined serial number"
-  ansible.builtin.assert:
-    that:
-      - zone.soa.serial is defined
-  loop: "{{ dns_auth_zones }}"
-  loop_control:
-    loop_var: "zone"
-    label: "{{ zone.zone_fqdn }}"
-  when: not zone.dynamic
   no_log: true

@@ -45,9 +45,6 @@ options {
 
 {% for zone in (dns_auth_zones | flatten(levels=1)) %}
 zone "{{ zone.zone_fqdn }}" {
-{% if zone.dynamic %}
-    masterfile-format raw;
-{% endif %}
 {% if dns_is_primary %}
     dnssec-policy default;
     inline-signing yes;
