@@ -6,16 +6,14 @@ ROLES := dns dhcp lb
 ANSIBLE_HOST_KEY_CHECKING := "False"
 export ANSIBLE_HOST_KEY_CHECKING
 
+# typical `make clean install` is not needed with this configuration
 .PHONY: all
-all: notag
-
-.PHONY: notag
-notag: lint .venv/lock
-	. .venv/bin/activate && \
-	python3 -m ansible playbook -i inventory/hosts.yml site.yml
+all: install
 
 .PHONY: install
-install: .git/hooks/pre-commit
+install: lint .venv/lock
+	. .venv/bin/activate && \
+	python3 -m ansible playbook -i inventory/hosts.yml site.yml
 
 .PHONY: verbose
 verbose: lint .venv/lock
