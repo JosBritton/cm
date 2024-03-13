@@ -9,7 +9,7 @@ $TTL {{ zone.ttl_seconds }}
         )
         NS {{ inventory_hostname }}.
 $ORIGIN {{ zone.zone_fqdn }}.
-{% if zone.records is defined %}
+{% if not zone.dynamic %}
 {% for record in zone.records %}
 {{ record | join(" ") }}
 {% endfor %}
