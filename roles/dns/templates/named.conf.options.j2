@@ -28,21 +28,12 @@ options {
     # TODO
     dnssec-validation {{ "auto" if dns_is_auth else "no" }};
 
-{% if dns_is_auth %}
-    allow-query-cache { localhost; };
-{% else %}
+{% if not dns_is_auth %}
     forwarders {
         127.0.0.1 port {{ dns_proxy_port }};
     };
 {% endif %}
 };
-
-{% if dns_is_primary %}
-# Because journal files for dynamic inline-signed zones currently cannot be located in a different directory than the primary zone file,
-# and static zones are using inline-singing which will generate dynamic zones with journals that cannot be relocated, static zones must
-# also be located in a bind user writable directory (/var/lib/bind/). Ideally journal files for inline-signed zones would be placed in
-# the same directory as `key-directory`, but this is not the case (2024-03-06).
-{% endif %}
 
 {% for zone in (dns_auth_zones | flatten(levels=1)) %}
 zone "{{ zone.zone_fqdn }}" {
@@ -57,23 +48,25 @@ zone "{{ zone.zone_fqdn }}" {
 {% for host in groups["ns_auth_secondary"] | map("extract", hostvars, "ansible_default_ipv4") | map(attribute="address") %}
         {{ host }};
 {% endfor %}
-{% for host in groups["ns_forward"] | map("extract", hostvars, "ansible_default_ipv4") | map(attribute="address") %}
-        {{ host }};
-{% endfor %}
     };
     allow-transfer {
 {% for host in groups["ns_auth_secondary"] | map("extract", hostvars, "ansible_default_ipv4") | map(attribute="address") %}
         {{ host }};
 {% endfor %}
-{% for host in groups["ns_forward"] | map("extract", hostvars, "ansible_default_ipv4") | map(attribute="address") %}
-        {{ host }};
-{% endfor %}
     };
-{% else %}
+{% elif dns_is_auth %}
     type secondary;
     file "/var/lib/bind/db.{{ zone.zone_fqdn }}";
     primaries {
 {% for host in groups["ns_auth_primary"] | map("extract", hostvars, "ansible_default_ipv4") | map(attribute="address") %}
+        {{ host }};
+{% endfor %}
+    };
+{% else %}
+    type forward;
+    forward only;
+    forwarders {
+{% for host in groups["ns_auth"] | map("extract", hostvars, "ansible_default_ipv4") | map(attribute="address") %}
         {{ host }};
 {% endfor %}
     };
