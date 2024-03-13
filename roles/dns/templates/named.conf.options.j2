@@ -25,7 +25,8 @@ options {
 {% endif %}
 
     recursion {{ "no" if dns_is_auth else "yes" }};
-    dnssec-validation auto;
+    # TODO
+    dnssec-validation {{ "auto" if dns_is_auth else "no" }};
 
 {% if dns_is_auth %}
     allow-query-cache { localhost; };
@@ -46,8 +47,6 @@ options {
 {% for zone in (dns_auth_zones | flatten(levels=1)) %}
 zone "{{ zone.zone_fqdn }}" {
 {% if dns_is_primary %}
-    dnssec-policy default;
-    inline-signing yes;
     type primary;
 {% if zone.dynamic %}
     update-policy { grant {{ zone.zone_fqdn }} zonesub {{ zone.dynamic_update_policy }}; };
