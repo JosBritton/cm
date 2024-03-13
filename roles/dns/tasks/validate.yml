@@ -2,10 +2,16 @@
 - name: "Include secrets"
   ansible.builtin.include_vars:
     file: "inventory/secrets.yml"
+  delegate_to: "localhost"
+  become: false
+  run_once: true
 
 - name: "Get list of RNDC keys"
   ansible.builtin.set_fact:
     rndc_key_list: "{{ rndc_keys.zone_keys | map(attribute='zone_fqdn') + rndc_keys.reverse_zone_keys | map(attribute='zone_fqdn') }}"
+  delegate_to: "localhost"
+  become: false
+  run_once: true
 
 - name: "Ensure that every dynamic authoritative zone specified has a corresponding TSIG key or is static"
   ansible.builtin.assert:
@@ -14,19 +20,25 @@
     fail_msg: |
       TSIG key for dynamic zone '{{ zone.zone_fqdn }}' not found in secrets.yml.
       Did you forget to add it?
+    quiet: true
   loop: "{{ dns_auth_zones }}"
   loop_control:
     loop_var: "zone"
     label: "{{ zone.zone_fqdn }}"
-  no_log: "{{ not log_secrets }}"
+  delegate_to: "localhost"
+  become: false
+  run_once: true
 
 - name: "Ensure that every static authoritative zone soa has a defined serial number"
   ansible.builtin.assert:
     that:
       - zone.soa.serial is defined
+    quiet: true
   loop: "{{ dns_auth_zones }}"
   loop_control:
     loop_var: "zone"
     label: "{{ zone.zone_fqdn }}"
   when: not zone.dynamic
-  no_log: "{{ not log_secrets }}"
+  delegate_to: "localhost"
+  become: false
+  run_once: true
