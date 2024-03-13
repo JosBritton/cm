@@ -1,8 +1,6 @@
 # vim: ft=yaml.ansible
 - name: "Wait for cloud-init to finish"
   hosts: "all"
-  tags:
-    - "dns"
   tasks:
     - name: "Wait for cloud-init to finish"
       ansible.builtin.command: cloud-init status --wait
@@ -10,8 +8,6 @@
 
 - name: "Base"
   hosts: "all"
-  tags:
-    - "dns"
   become: true
   tasks:
     - name: "Fail for wrong Linux distribution on remote machine"
@@ -29,8 +25,7 @@
 
 - name: "DNS"
   hosts: "ns"
-  tags: "dns"
   gather_facts: true
   roles:
-    - role: "dns"
+    - role: dns
       become: true
