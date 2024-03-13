@@ -1,0 +1,22 @@
+# vim: ft=yaml.ansible
+- name: "Update record on server"
+  community.general.nsupdate:
+    ttl: "{{ zone.ttl_seconds }}"
+    zone: "{{ zone.zone_fqdn }}."
+    record: "{{ record[0] }}"
+    type: "{{ record[1] }}"
+    value: "{{ record[2] | split(' ') | list }}"
+    state: "present"
+    server: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+    key_name: "{{ zone.zone_fqdn }}"
+    protocol: "tcp"
+    key_secret: "{{ zone.secret }}"
+    key_algorithm: "{{ zone.algorithm }}"
+  loop: "{{ zone.records }}"
+  loop_control:
+    loop_var: "record"
+  delegate_to: "localhost"
+  become: false
+  run_once: true
+  tags:
+    - skip_ansible_lint

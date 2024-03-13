@@ -64,3 +64,17 @@
         name: "named.service"
         state: "started"
         enabled: true
+
+    - name: "Initialize file for dynamic zone on disk"
+      ansible.builtin.include_tasks:
+        file: "initdynamiczonefile.yml"
+      loop: "{{ dns_auth_zones | flatten(levels=1) }}"
+      loop_control:
+        label: "{{ initzone.zone_fqdn }}"
+        loop_var: "initzone"
+      when: dns_is_primary and initzone.dynamic
+
+    - name: "Update dynamic Bind9 zones on primary servers"
+      ansible.builtin.include_tasks:
+        file: "updatedynamiczone.yml"
+      when: dns_is_primary
