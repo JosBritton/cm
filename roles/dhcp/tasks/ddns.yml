@@ -13,7 +13,7 @@
   notify:
     - "Restart Kea DHCP4 server"
     - "Restart Kea DHCP DDNS server"
-  no_log: "{{ not log_secrets }}"
+# no_log: true
 
 - name: "Update Kea DHCP DDNS configuration file"
   ansible.builtin.template:
