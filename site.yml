@@ -11,7 +11,7 @@
       changed_when: false
 
 - name: "Base"
-  hosts: "all"
+  hosts: "managed"
   tags:
     - "dns"
     - "dhcp"
