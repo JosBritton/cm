@@ -1,13 +1,13 @@
 $ORIGIN .
 $TTL {{ zone.ttl_seconds }}
-{{ zone.zone_fqdn }} IN SOA {{ inventory_hostname }}. root.{{ zone.zone_fqdn }}. (
+{{ zone.zone_fqdn }} IN SOA {{ inventory_hostname_short }}{{ zone.zone_fqdn }}. root.{{ zone.zone_fqdn }}. (
         {{ zone.soa.serial }}
         {{ zone.soa.refresh_seconds }}
         {{ zone.soa.retry_seconds }}
         {{ zone.soa.expire_seconds }}
         {{ zone.soa.minimum_seconds }}
         )
-        NS {{ inventory_hostname }}.
+        NS {{ inventory_hostname_short }}{{ zone.zone_fqdn }}.
 $ORIGIN {{ zone.zone_fqdn }}.
 {% if zone.records is defined %}
 {% for record in zone.records %}
