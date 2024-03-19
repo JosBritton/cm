@@ -7,7 +7,7 @@ After=network-online.target
 User=envoy
 Group=envoy
 Type=simple
-ExecStart=/usr/local/bin/envoy --config-yaml=/etc/envoy/envoy.yaml
+ExecStart=/usr/local/bin/envoy -c /etc/envoy/envoy.yaml
 ExecReload=/bin/kill -HUP $MAINPID
 ExecStop=/bin/kill -TERM $MAINPID
 Restart=always

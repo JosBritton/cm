@@ -51,6 +51,20 @@
   notify:
     - "Restart Envoy service"
 
+- name: "Get capabilities for Envoy"
+  ansible.builtin.command:
+    cmd: "getcap /usr/local/bin/envoy"
+  changed_when: false
+  register: "cap"
+
+- name: "Allow Envoy to bind to priveleged ports"
+  ansible.builtin.command:
+    cmd: "setcap 'cap_net_bind_service=+ep' /usr/local/bin/envoy"
+  when: cap.stdout != "/usr/local/bin/envoy cap_net_bind_service=ep"
+  changed_when: true
+  notify:
+    - "Restart Envoy service"
+
 - name: "Update Envoy configuration file"
   ansible.builtin.template:
     group: "root"
