@@ -15,6 +15,13 @@
       - "keepalived"
     state: "present"
 
+- name: "Generate vrrp authentication password"
+  ansible.builtin.set_fact:
+    lb_vrrp_auth_pass: "{{ lookup('ansible.builtin.password', '/dev/null chars=ascii_letters,digit length=8') | lower }}"
+  run_once: true
+  delegate_to: "{{ item }}"
+  loop: "{{ ansible_play_hosts }}"
+
 - name: "Update keepalived configuration"
   ansible.builtin.template:
     src: "keepalived.conf.j2"

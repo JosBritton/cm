@@ -6,9 +6,9 @@ vrrp_instance VI_1 {
     advert_int 1
     authentication {
         auth_type AH
-        auth_pass pass1234
+        auth_pass {{ lb_vrrp_auth_pass }}
     }
     virtual_ipaddress {
-        10.0.3.20
+        {{ lb_vip }}
     }
 }
