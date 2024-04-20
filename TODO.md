@@ -11,6 +11,7 @@
 - Implement `named-checkconf` testing before finalizing conf or zone templating
   This is important as certain zone config errros will not result in an exit code >1 for status commands,
   even `rndc zonestatus 'example.org'` as may be expected.
+- Add tests for canonical hostname in {{ inventory_hostname }} of records in `ns_auth_primary`
 
 ## DHCP
 - Implemenet `kea-dhcp <module> -t <filename>` testing before templating.
