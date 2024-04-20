@@ -1,0 +1,14 @@
+[Interface]
+PrivateKey = {{ bt_wg_client_private_key }}
+Address = {{ bt_wg_client_ip }}
+PostUp = ip rule add from {{ bt_private_network }} table main; resolvectl dns %i 10.0.3.10 10.0.3.11; resolvectl domain %i ~.; resolvectl dns {{ bt_default_interface }} 10.0.3.10 10.0.3.11; resolvectl domain {{ bt_default_interface }} ~.
+PreDown = ip rule del from {{ bt_private_network }} table main
+
+[Peer]
+PublicKey = {{ bt_wg_server_pub_key }}
+PresharedKey = {{ bt_wg_server_psk }}
+AllowedIPs = 0.0.0.0/0,::/0
+Endpoint = {{ bt_wg_server_endpoint }}
+{% if bt_wg_nat_keepalive %}
+PersistentKeepalive = {{ bt_wg_nat_keepalive_interval }}
+{% endif %}

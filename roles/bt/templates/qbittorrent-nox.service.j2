@@ -1,0 +1,29 @@
+[Unit]
+Description=qBittorrent-nox service
+Documentation=man:qbittorrent-nox(1)
+Wants=network-online.target
+After=network-online.target nss-lookup.target {% if bt_external_mounts is defined %}{% for mount in bt_external_mounts %}{{ mount.systemd_mount }}{% endfor %}{% endif %} {% if bt_install_vpn %}wg-quick@{{ bt_wg_interface }}.service{% endif %}
+{% if bt_install_vpn %}
+Requries=wg-quick@{{ bt_wg_interface }}.service
+{% endif %}
+# /mnt/data
+BindsTo={% if bt_external_mounts is defined %}{% for mount in bt_external_mounts %}{{ mount.systemd_mount }}{% endfor %}{% endif %}
+
+[Service]
+{% if ansible_facts.packages["systemd"][0]["version"] is version("240", "<=") %}
+Type=simple
+{% else %}
+Type=exec
+{% endif %}
+User=qbittorrent
+Group=qbittorrent
+WorkingDirectory=/var/lib/qbittorrent
+ExecStart=/usr/bin/qbittorrent-nox --webui-port={{ bt_webui_port }} --profile=/mnt/qbittorrent/profile
+Restart=always
+RestartSec=6
+{% if ansible_facts.packages["qbittorrent-nox"][0]["version"] is version("4.2.0", "<=") %}
+LimitNOFILE=infinity
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target

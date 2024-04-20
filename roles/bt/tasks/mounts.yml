@@ -1,0 +1,25 @@
+# vim: ft=yaml.ansible
+- name: "Get stats of external mount points"
+  ansible.builtin.stat:
+    path: "{{ mount.path }}"
+  register: "mountpoint"
+
+- name: "Create external mount points"
+  ansible.builtin.file:
+    path: "{{ mount.path }}"
+    owner: "qbittorrent"
+    group: "qbittorrent"
+    state: "directory"
+    mode: "0700"
+  when: "not mountpoint.stat.exists"
+
+- name: "Configure mount information on filesystem"
+  ansible.builtin.lineinfile:
+    path: "/etc/fstab"
+    regexp: "^{{ mount.endpoint }}:{{ mount.external_path }} {{ mount.path }} {{ mount.helper }} {{ mount.mount_options }} 0 0$"
+    line: "{{ mount.endpoint }}:{{ mount.external_path }} {{ mount.path }} {{ mount.helper }} {{ mount.mount_options }} 0 0"
+    create: true
+    owner: "qbittorrent"
+    group: "qbittorrent"
+    mode: "0644"
+  notify: "Reload systemd daemon"

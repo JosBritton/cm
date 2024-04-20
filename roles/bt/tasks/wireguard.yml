@@ -1,0 +1,32 @@
+# vim: ft=yaml.ansible
+- name: "Install prerequisite packages"
+  ansible.builtin.apt:
+    name:
+      - wireguard-tools
+    state: "present"
+
+# not strictly required as far as I know
+- name: "Enable port forwarding"
+  ansible.posix.sysctl:
+    name: "net.ipv4.ip_forward"
+    value: 1
+
+- name: "Include secrets"
+  ansible.builtin.include_vars:
+    file: "inventory/secrets.yml"
+
+- name: "Template out Wireguard client config"
+  ansible.builtin.template:
+    src: "client.conf.j2"
+    mode: "0700"
+    owner: "root"
+    group: "root"
+    dest: "/etc/wireguard/{{ bt_wg_interface }}.conf"
+    force: true
+  notify: "Restart Wireguard-quick service"
+
+- name: "Start and enable Wireguard-quick service for configured interface"
+  ansible.builtin.systemd:
+    name: "wg-quick@{{ bt_wg_interface }}.service"
+    state: "started"
+    enabled: true

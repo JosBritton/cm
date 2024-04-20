@@ -1,0 +1,144 @@
+# vim: ft=yaml.ansible
+- name: "Install prerequisite packages"
+  ansible.builtin.apt:
+    name:
+      - qbittorrent-nox
+    state: "present"
+  notify: "Restart qBittorrent service"
+
+- name: "Gather package facts"
+  ansible.builtin.package_facts:
+    manager: "auto"
+
+- name: "Create qBittorrent group"
+  ansible.builtin.group:
+    name: "qbittorrent"
+    state: "present"
+    system: false
+  notify: "Restart qBittorrent service"
+
+- name: "Create qBittorrent user"
+  ansible.builtin.user:
+    name: "qbittorrent"
+    group: "qbittorrent"
+    home: "/nonexistent"
+    create_home: false
+    shell: "/usr/sbin/nologin"
+    system: false
+    state: "present"
+  notify: "Restart qBittorrent service"
+
+- name: "Create qBittorrent persistent data directory"
+  ansible.builtin.file:
+    path: "/var/lib/qbittorrent/config"
+    mode: "0755"
+    owner: "qbittorrent"
+    group: "qbittorrent"
+    state: "directory"
+  notify: "Restart qBittorrent service"
+
+- name: "Accept legal notice for qBittorrent usage"
+  ansible.builtin.lineinfile:
+    path: "/var/lib/qbittorrent/config/qBittorrent.conf"
+    regexp: "{{ item.re }}"
+    line: "{{ item.line }}"
+    insertafter: "{{ item.after | default(omit) }}"
+    create: true
+    owner: "qbittorrent"
+    group: "qbittorrent"
+    mode: "0644"
+  loop:
+    - { re: "^[LegalNotice]$", line: "[LegalNotice]" }
+    - { re: "^Accepted=true$", line: "Accepted=true", after: "^[LegalNotice]$" }
+# [BitTorrent]
+# Session\QueueingSystemEnabled=false
+
+- name: "Create profile mountpoint for qBittorrent"
+  ansible.builtin.file:
+    path: "/mnt/qbittorrent/profile"
+    owner: "qbittorrent"
+    group: "qbittorrent"
+    mode: "0755"
+    state: "directory"
+
+- name: "Create link to profile for qBittorrent service"
+  ansible.builtin.file:
+    path: "/mnt/qbittorrent/profile/qBittorrent"
+    src: "/var/lib/qbittorrent"
+    owner: "qbittorrent"
+    group: "qbittorrent"
+    state: "link"
+
+- name: "Create web-GUI SSL directory"
+  ansible.builtin.file:
+    path: "/var/lib/qbittorrent/ssl"
+    mode: "0700"
+    owner: "qbittorrent"
+    group: "qbittorrent"
+    state: "directory"
+  notify: "Restart qBittorrent service"
+
+- name: "Create web-GUI SSL certificate"
+  ansible.builtin.command:
+    cmd: "openssl req -new -x509 -nodes -out /var/lib/qbittorrent/ssl/server.crt -keyout /var/lib/qbittorrent/ssl/server.key -batch"
+  changed_when: true  # always create new SSL certificate
+  notify: "Restart qBittorrent service"
+
+- name: "Change ownership of web-GUI SSL certificate"
+  ansible.builtin.file:
+    path: "/var/lib/qbittorrent/ssl/server.crt"
+    owner: "qbittorrent"
+    group: "qbittorrent"
+    mode: "0644"
+    state: "file"
+
+- name: "Change ownership of web-GUI SSL key"
+  ansible.builtin.file:
+    path: "/var/lib/qbittorrent/ssl/server.key"
+    owner: "qbittorrent"
+    group: "qbittorrent"
+    mode: "0600"
+    state: "file"
+
+- name: "Configure external mounts"
+  ansible.builtin.include_tasks:
+    file: "mounts.yml"
+  loop: "{{ bt_external_mounts }}"
+  loop_control:
+    loop_var: "mount"
+  when: "bt_external_mounts is defined"
+
+# - name: "Configure qBittorrent to use SSL certificate path"
+#   ansible.builtin.lineinfile:
+#     path: "/var/lib/qbittorrent/config/qBittorrent.conf"
+#     regexp: "{{ item.re }}"
+#     line: "{{ item.line }}"
+#     insertafter: "{{ item.after | default(omit) }}"
+#     create: true
+#     owner: "qbittorrent"
+#     group: "qbittorrent"
+#     mode: "0644"
+#   loop:
+#     - { re: '^\[LegalNotice\]$', line: "[LegalNotice]" }
+#     - { re: "^Accepted=true$", line: "Accepted=true", after: '^\[LegalNotice\]$' }
+
+# - name: "Link qBittorrent log file to stdout"
+#   ansible.builtin.file:
+#     path: "/var/lib/qbittorrent/"
+
+- name: "Template out qBittorrent service file"
+  ansible.builtin.template:
+    src: "qbittorrent-nox.service.j2"
+    mode: "0644"
+    owner: "root"
+    group: "root"
+    dest: "/etc/systemd/system/qbittorrent-nox.service"
+  notify:
+    - "Reload systemd daemon"
+    - "Restart qBittorrent service"
+
+- name: "Start and enable qBittorrent service"
+  ansible.builtin.systemd:
+    name: "qbittorrent-nox.service"
+    state: "started"
+    enabled: true

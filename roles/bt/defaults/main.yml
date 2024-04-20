@@ -1,0 +1,6 @@
+bt_wg_interface: "wg0"
+bt_wg_nat_keepalive: true
+bt_wg_nat_keepalive_interval: 25
+bt_default_interface: "eth0"
+bt_install_vpn: true
+bt_webui_port: "8443"

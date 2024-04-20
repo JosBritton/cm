@@ -1,0 +1,9 @@
+# vim: ft=yaml.ansible
+- name: "Install Wireguard"
+  ansible.builtin.include_tasks:
+    file: "wireguard.yml"
+  when: "bt_install_vpn"
+
+- name: "Install qBittorrent"
+  ansible.builtin.include_tasks:
+    file: "qbittorrent.yml"

@@ -5,6 +5,7 @@
     - "dns"
     - "dhcp"
     - "lb"
+    - "bt"
   tasks:
     - name: "Wait for cloud-init to finish"
       ansible.builtin.command: cloud-init status --wait
@@ -16,6 +17,7 @@
     - "dns"
     - "dhcp"
     - "lb"
+    - "bt"
   become: true
   tasks:
     - name: "Fail for wrong Linux distribution on remote machine"
@@ -63,4 +65,12 @@
   gather_facts: true
   roles:
     - role: "lb"
+      become: true
+
+- name: "Bittorrent client"
+  hosts: "bt"
+  tags: "bt"
+  gather_facts: true
+  roles:
+    - role: "bt"
       become: true
