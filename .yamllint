@@ -8,7 +8,7 @@ ignore-from-file:
 rules:
   anchors: "enable"
   braces:
-    min-spaces-inside: 1
+    min-spaces-inside: 0
     max-spaces-inside: 1
     min-spaces-inside-empty: 0
     max-spaces-inside-empty: 0
@@ -25,9 +25,8 @@ rules:
     min-spaces-after: 1
     max-spaces-after: 1
   comments:
-    level: "warning"
-  comments-indentation:
-    level: "warning"
+    min-spaces-from-content: 1
+  comments-indentation: false
   document-start:
     present: false
   document-end:
