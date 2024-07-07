@@ -1,0 +1,4 @@
+domain {{ dns_system_hostname | default(inventory_hostname.split(".")[1:] | join(".")) }}
+{% for ns in dns_system_nameservers %}
+nameserver {{ ns }}
+{% endfor %}

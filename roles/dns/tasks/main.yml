@@ -3,6 +3,14 @@
   ansible.builtin.include_tasks:
     file: "validate.yml"
 
+- name: "Template resolv.conf"
+  ansible.builtin.template:
+    mode: "0644"
+    owner: "root"
+    group: "root"
+    src: "resolv.conf.j2"
+    dest: "/etc/resolv.conf"
+
 - name: "Install Bind9 server and test utilities"
   ansible.builtin.apt:
     name:
