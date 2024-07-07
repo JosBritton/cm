@@ -1,0 +1,122 @@
+[Application]
+MemoryWorkingSetLimit=512
+
+[AutoRun]
+OnTorrentAdded\Enabled=false
+OnTorrentAdded\Program=
+enabled={{ bt_qb_config_autorun_enabled }}
+program={{ bt_qb_config_autorun_program }}
+
+[BitTorrent]
+Session\AddExtensionToIncompleteFiles=true
+Session\AddTorrentPaused=true
+{% if bt_install_vpn %}
+Session\AddTrackersEnabled=true
+Session\AdditionalTrackers={{ bt_qb_additional_trackers | join('\\n') }}
+Session\AnnounceToAllTrackers=true
+{% else %}
+Session\AddTrackersEnabled=false
+{% endif %}
+Session\BTProtocol={{ bt_qb_config_btproto }}
+Session\DHTEnabled=true
+Session\MultiConnectionsPerIp={{ bt_qb_config_multiple_connections_per_ip }}
+Session\DefaultSavePath={{ bt_qb_config_default_dl_path }}
+Session\DisableAutoTMMTriggers\CategoryChanged=true
+Session\DiskCacheTTL=20
+Session\ExcludedFileNames=
+Session\IgnoreSlowTorrentsForQueueing=true
+Session\Interface={{ bt_qb_config_interface }}
+Session\InterfaceAddress={{ bt_qb_config_address }}
+Session\InterfaceName={{ bt_qb_config_interface }}
+Session\LSDEnabled=false
+Session\MaxActiveCheckingTorrents=8
+Session\MaxActiveDownloads=6
+Session\MaxActiveTorrents=-1
+Session\MaxActiveUploads=-1
+Session\MaxConnections=1000
+Session\MaxConnectionsPerTorrent=150
+Session\MaxUploads=50
+Session\MaxUploadsPerTorrent=-1
+Session\PeXEnabled=true
+Session\PerformanceWarning=true
+Session\PieceExtentAffinity=true
+Session\Port={{ bt_qb_config_port }}
+Session\QueueingSystemEnabled=true
+Session\ReannounceWhenAddressChanged=true
+Session\RequestQueueSize=5000
+Session\SaveResumeDataInterval=15
+Session\SlowTorrentsDownloadRate=300
+Session\SlowTorrentsInactivityTimer=60
+Session\SlowTorrentsUploadRate=300
+Session\SuggestMode=true
+Session\TempPathEnabled=true
+Session\TorrentContentLayout={{ bt_qb_config_content_layout }}
+Session\TorrentExportDirectory={{ bt_qb_config_torrent_export_dir }}
+Session\UseAlternativeGlobalSpeedLimit=false
+
+[Core]
+AutoDeleteAddedTorrentFile=Never
+
+[LegalNotice]
+Accepted=true
+
+[Meta]
+MigrationVersion=4
+
+[Network]
+Cookies=@Invalid()
+PortForwardingEnabled=false
+Proxy\OnlyForTorrents=false
+
+[Preferences]
+Advanced\RecheckOnCompletion=false
+Advanced\trackerPort=9000
+Advanced\trackerPortForwarding=false
+Connection\ResolvePeerCountries=true
+DynDNS\DomainName=changeme.dyndns.org
+DynDNS\Enabled=false
+DynDNS\Password=
+DynDNS\Service=DynDNS
+DynDNS\Username=
+General\Locale=en
+MailNotification\email=
+MailNotification\enabled=false
+MailNotification\password=
+MailNotification\req_auth=true
+MailNotification\req_ssl=false
+MailNotification\sender=qBittorrent_notification@example.com
+MailNotification\smtp_server=smtp.changeme.com
+MailNotification\username=
+WebUI\Address={{ bt_qb_config_web_address }}
+WebUI\AlternativeUIEnabled=false
+WebUI\AuthSubnetWhitelistEnabled=false
+WebUI\BanDuration=3600
+WebUI\CSRFProtection=true
+WebUI\ClickjackingProtection=true
+WebUI\CustomHTTPHeaders=
+WebUI\CustomHTTPHeadersEnabled=false
+WebUI\HTTPS\CertificatePath=/mnt/qbittorrent/profile/qBittorrent/ssl/server.crt
+WebUI\HTTPS\Enabled=true
+WebUI\HTTPS\KeyPath=/mnt/qbittorrent/profile/qBittorrent/ssl/server.key
+WebUI\HostHeaderValidation=true
+WebUI\LocalHostAuth=true
+WebUI\MaxAuthenticationFailCount=5
+
+{% if bt_install_vpn %}
+WebUI\Password_PBKDF2="{{ bt_qb_password_vpn }}"
+{% else %}
+WebUI\Password_PBKDF2="{{ bt_qb_password_no_vpn }}"
+{% endif %}
+WebUI\Port={{ bt_webui_port }}
+WebUI\ReverseProxySupportEnabled=false
+WebUI\RootFolder=
+WebUI\SecureCookie=true
+WebUI\ServerDomains=*
+WebUI\SessionTimeout=3600
+WebUI\TrustedReverseProxiesList=
+WebUI\UseUPnP=false
+WebUI\Username=admin
+
+[RSS]
+AutoDownloader\DownloadRepacks=true
+AutoDownloader\SmartEpisodeFilter=s(\\d+)e(\\d+), (\\d+)x(\\d+), "(\\d{4}[.\\-]\\d{1,2}[.\\-]\\d{1,2})", "(\\d{1,2}[.\\-]\\d{1,2}[.\\-]\\d{4})"

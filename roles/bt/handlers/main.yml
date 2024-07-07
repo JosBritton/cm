@@ -4,11 +4,9 @@
     name: "wg-quick@{{ bt_wg_interface }}.service"
     state: "restarted"
 
-- name: "Reload systemd daemon"
-  ansible.builtin.systemd:
-    daemon_reload: true
-
 - name: "Restart qBittorrent service"
   ansible.builtin.systemd:
     name: "qbittorrent-nox.service"
+    daemon_reload: true
     state: "restarted"
+    enabled: true

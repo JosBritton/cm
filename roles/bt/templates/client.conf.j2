@@ -1,7 +1,9 @@
 [Interface]
 PrivateKey = {{ bt_wg_client_private_key }}
 Address = {{ bt_wg_client_ip }}
-PostUp = ip rule add from {{ bt_private_network }} table main; resolvectl dns %i 10.0.3.10 10.0.3.11; resolvectl domain %i ~.; resolvectl dns {{ bt_default_interface }} 10.0.3.10 10.0.3.11; resolvectl domain {{ bt_default_interface }} ~.
+MTU = {{ bt_wg_mtu }}
+DNS = {{ bt_wg_dns }}
+PostUp = ip rule add from {{ bt_private_network }} table main
 PreDown = ip rule del from {{ bt_private_network }} table main
 
 [Peer]
