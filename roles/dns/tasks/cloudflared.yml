@@ -1,8 +1,9 @@
 # vim: ft=yaml.ansible
 - name: "Install Cloudflared"
   ansible.builtin.apt:
-    deb: "https://github.com/cloudflare/cloudflared/releases/download/2024.2.0/cloudflared-linux-amd64.deb"
+    deb: "https://github.com/cloudflare/cloudflared/releases/download/2024.6.1/cloudflared-linux-amd64.deb"
     state: present
+  notify: "Restart Cloudflared service"
 
 - name: "Replace Cloudflared service file"
   ansible.builtin.template:
