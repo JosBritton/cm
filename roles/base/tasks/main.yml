@@ -1,0 +1,17 @@
+- name: "Wait for cloud-init to finish"
+  ansible.builtin.command: cloud-init status --wait
+  changed_when: false
+
+- name: "Fail for wrong Linux distribution on remote machine"
+  ansible.builtin.fail:
+    msg: "Incorrect distribution on target machine."
+  when: ansible_facts["distribution"] != "Debian"
+
+- name: "Install base packages"
+  ansible.builtin.apt:
+    name:
+      - "qemu-guest-agent"
+      - "debian-keyring"
+      - "debian-archive-keyring"
+    state: "present"
+    update_cache: false

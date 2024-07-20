@@ -14,6 +14,12 @@
     - "Restart Kea DHCP4 server"
     - "Restart Kea DHCP DDNS server"
 
+- name: "Gather facts about primary authoritative DNS servers"
+  ansible.builtin.gather_facts: {}
+  delegate_to: "{{ item }}"
+  delegate_facts: true
+  loop: "{{ groups['ns_auth_primary'] }}"
+
 - name: "Update Kea DHCP DDNS configuration file"
   ansible.builtin.template:
     src: "kea-dhcp-ddns.conf.j2"

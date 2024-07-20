@@ -1,46 +1,11 @@
 # vim: ft=yaml.ansible
-- name: "Wait for cloud-init to finish"
-  hosts: "all"
-  tags:
-    - "dns"
-    - "dhcp"
-    - "lb"
-    - "bt"
-    - "stork_agent"
-  tasks:
-    - name: "Wait for cloud-init to finish"
-      ansible.builtin.command: cloud-init status --wait
-      changed_when: false
-
-- name: "Base"
-  hosts: "all"
-  tags:
-    - "dns"
-    - "dhcp"
-    - "lb"
-    - "bt"
-    - "stork_agent"
-  become: true
-  tasks:
-    - name: "Fail for wrong Linux distribution on remote machine"
-      ansible.builtin.fail:
-        msg: "Incorrect distribution on target machine."
-      when: ansible_facts["distribution"] != "Debian"
-
-    - name: "Install base packages"
-      ansible.builtin.apt:
-        name:
-          - "qemu-guest-agent"
-          - "debian-keyring"
-          - "debian-archive-keyring"
-        state: "present"
-        update_cache: false
-
 - name: "DNS"
   hosts: "ns"
   tags: "dns"
   gather_facts: true
   roles:
+    - role: "base"
+      become: true
     - role: "dns"
       become: true
 
@@ -49,6 +14,8 @@
   tags: "dhcp"
   gather_facts: true
   roles:
+    - role: "base"
+      become: true
     - role: "dhcp"
       become: true
 
@@ -57,6 +24,8 @@
   tags: "stork_agent"
   gather_facts: true
   roles:
+    - role: "base"
+      become: true
     - role: "stork_agent"
       become: true
 
@@ -65,6 +34,8 @@
   tags: "lb"
   gather_facts: true
   roles:
+    - role: "base"
+      become: true
     - role: "lb"
       become: true
 
@@ -73,5 +44,7 @@
   tags: "bt"
   gather_facts: true
   roles:
+    - role: "base"
+      become: true
     - role: "bt"
       become: true
