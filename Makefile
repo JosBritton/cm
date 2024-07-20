@@ -34,6 +34,7 @@ lint: .venv/lock .git/hooks/pre-commit
 
 .PHONY: clean
 clean:
+	(. .venv/bin/activate && pre-commit uninstall) || true
 	rm -rf .venv/
 
 .venv/lock: requirements.txt
