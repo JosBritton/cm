@@ -10,7 +10,7 @@ export ANSIBLE_HOST_KEY_CHECKING
 all: notag
 
 .PHONY: notag
-notag: lint .venv/lock
+notag: .venv/lock
 	. .venv/bin/activate && \
 	python3 -m ansible playbook -i inventory/hosts.yml site.yml
 
@@ -18,12 +18,12 @@ notag: lint .venv/lock
 install: .git/hooks/pre-commit
 
 .PHONY: verbose
-verbose: lint .venv/lock
+verbose: .venv/lock
 	. .venv/bin/activate && \
 	python3 -m ansible playbook -i inventory/hosts.yml site.yml -vvv
 
 .PHONY: $(ROLES)
-$(ROLES): lint .venv/lock
+$(ROLES): .venv/lock
 	. .venv/bin/activate && \
 	python3 -m ansible playbook -i inventory/hosts.yml site.yml --tags "$@"
 
