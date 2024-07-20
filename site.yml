@@ -1,50 +1,49 @@
-# vim: ft=yaml.ansible
-- name: "DNS"
-  hosts: "ns"
-  tags: "dns"
+- name: Install Bind9 DNS server
+  hosts: ns
+  tags: dns
   gather_facts: true
   roles:
-    - role: "base"
+    - role: base
       become: true
-    - role: "dns"
+    - role: dns
       become: true
 
-- name: "DHCP"
-  hosts: "dhcp"
-  tags: "dhcp"
+- name: Install Kea DHCP server
+  hosts: dhcp
+  tags: dhcp
   gather_facts: true
   roles:
-    - role: "base"
+    - role: base
       become: true
-    - role: "dhcp"
+    - role: dhcp
       become: true
 
-- name: "Install stork agent"
-  hosts: "stork_agent"
-  tags: "stork_agent"
+- name: Install Stork agent
+  hosts: stork_agent
+  tags: stork_agent
   gather_facts: true
   roles:
-    - role: "base"
+    - role: base
       become: true
-    - role: "stork_agent"
+    - role: stork_agent
       become: true
 
-- name: "LB"
-  hosts: "lb"
-  tags: "lb"
+- name: Install Envoy load balancer
+  hosts: lb
+  tags: lb
   gather_facts: true
   roles:
-    - role: "base"
+    - role: base
       become: true
-    - role: "lb"
+    - role: envoy
       become: true
 
-- name: "Bittorrent client"
-  hosts: "bt"
-  tags: "bt"
+- name: Install bittorrent client
+  hosts: bt
+  tags: bt
   gather_facts: true
   roles:
-    - role: "base"
+    - role: base
       become: true
-    - role: "bt"
+    - role: bt
       become: true

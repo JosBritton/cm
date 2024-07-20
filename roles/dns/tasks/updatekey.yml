@@ -1,28 +1,27 @@
-# vim: ft=yaml.ansible
-- name: "Include secret vars"
+- name: Include secret vars
   ansible.builtin.include_vars:
-    file: "inventory/secrets.yml"
+    file: inventory/secrets.yml
 
-- name: "Update RNDC keys"
+- name: Update RNDC keys
   ansible.builtin.template:
-    src: "rndc-key.j2"
-    dest: "/etc/bind/ns-{{ key.zone_fqdn }}_rndc-key"
-    owner: "bind"
-    group: "bind"
+    src: rndc-key.j2
+    dest: /etc/bind/ns-{{ key.zone_fqdn }}_rndc-key
+    owner: bind
+    group: bind
     mode: "0640"
   loop: "{{ rndc_keys.zone_keys | flatten(levels=1) }}"
   loop_control:
-    loop_var: "key"
+    loop_var: key
     label: "{{ key.zone_fqdn }}"
 
-- name: "Update reverse RNDC keys"
+- name: Update reverse RNDC keys
   ansible.builtin.template:
-    src: "rndc-key.j2"
-    dest: "/etc/bind/ns-{{ key.zone_fqdn }}_rndc-key"
-    owner: "bind"
-    group: "bind"
+    src: rndc-key.j2
+    dest: /etc/bind/ns-{{ key.zone_fqdn }}_rndc-key
+    owner: bind
+    group: bind
     mode: "0640"
   loop: "{{ rndc_keys.reverse_zone_keys | flatten(levels=1) }}"
   loop_control:
-    loop_var: "key"
+    loop_var: key
     label: "{{ key.zone_fqdn }}"

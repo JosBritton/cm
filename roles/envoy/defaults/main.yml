@@ -1,0 +1,2 @@
+envoy_lb_is_primary: false
+envoy_lb_vri: 101

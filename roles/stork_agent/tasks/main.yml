@@ -1,49 +1,48 @@
-# vim: ft=yaml.ansible
-- name: "Install stork-agent"
+- name: Install stork-agent
   ansible.builtin.apt:
-    deb: "https://dl.cloudsmith.io/public/isc/stork/deb/any-distro/pool/any-version/main/i/is/isc-stork-agent_1.17.0.240610135320/isc-stork-agent_1.17.0.240610135320_amd64.deb"
-    state: "present"
-  notify: "Restart stork agent"
+    deb: https://dl.cloudsmith.io/public/isc/stork/deb/any-distro/pool/any-version/main/i/is/isc-stork-agent_1.17.0.240610135320/isc-stork-agent_1.17.0.240610135320_amd64.deb
+    state: present
+  notify: Restart stork agent
 
-- name: "Configure stork-agent env"
+- name: Configure stork-agent env
   ansible.builtin.template:
-    src: "agent.env.j2"
-    dest: "/etc/stork/agent.env"
-    owner: "root"
-    group: "root"
+    src: agent.env.j2
+    dest: /etc/stork/agent.env
+    owner: root
+    group: root
     mode: "0644"
-  notify: "Restart stork agent"
+  notify: Restart stork agent
 
-- name: "Configure stork agent credentials"
+- name: Configure stork agent credentials
   ansible.builtin.template:
-    src: "agent-credentials.json.j2"
-    dest: "/etc/stork/agent-credentials.json"
-    owner: "stork-agent"
-    group: "stork-agent"
+    src: agent-credentials.json.j2
+    dest: /etc/stork/agent-credentials.json
+    owner: stork-agent
+    group: stork-agent
     mode: "0600"
   no_log: true
-  notify: "Restart stork agent"
+  notify: Restart stork agent
   when: stork_agent_credentials.keys() | length > 0
 
-- name: "Check for kea control agent config file"
+- name: Check for kea control agent config file
   ansible.builtin.stat:
-    path: "/etc/kea/kea-ctrl-agent.conf"
-  register: "check_for_kea_ctrl_agent_config"
+    path: /etc/kea/kea-ctrl-agent.conf
+  register: check_for_kea_ctrl_agent_config
 
-- name: "Add stork-agent to kea group"
+- name: Add stork-agent to kea group
   ansible.builtin.user:
-    name: "stork-agent"
-    groups: "_kea"
+    name: stork-agent
+    groups: _kea
     append: true
-  when: "check_for_kea_ctrl_agent_config.stat.exists"
+  when: check_for_kea_ctrl_agent_config.stat.exists
 
-- name: "Enable stork agent"
+- name: Enable stork agent
   ansible.builtin.systemd_service:
-    name: "isc-stork-agent"
+    name: isc-stork-agent
     enabled: true
 
-- name: "Start stork agent"
+- name: Start stork agent
   ansible.builtin.systemd_service:
-    name: "isc-stork-agent"
-    state: "started"
+    name: isc-stork-agent
+    state: started
   register: first_time_start

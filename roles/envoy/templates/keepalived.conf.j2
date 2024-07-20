@@ -1,14 +1,14 @@
 vrrp_instance VI_1 {
-    state {{ lb_is_primary | ternary("MASTER", "BACKUP") }}
+    state {{ envoy_lb_is_primary | ternary("MASTER", "BACKUP") }}
     interface {{ ansible_default_ipv4.interface }}
-    virtual_router_id {{ lb_vri }}
-    priority {{ lb_is_primary | ternary(20, 15) }}
+    virtual_router_id {{ envoy_lb_vri }}
+    priority {{ envoy_lb_is_primary | ternary(20, 15) }}
     advert_int 1
     authentication {
         auth_type AH
         auth_pass {{ lb_vrrp_auth_pass }}
     }
     virtual_ipaddress {
-        {{ lb_vip }}
+        {{ envoy_lb_vip }}
     }
 }

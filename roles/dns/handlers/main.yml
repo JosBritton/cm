@@ -1,9 +1,8 @@
-# vim: ft=yaml.ansible
-- name: "Replace Bind9 running server configuration"
-  ansible.builtin.include_tasks: "replace_named_config.yml"
+- name: Replace Bind9 running server configuration
+  ansible.builtin.include_tasks: replace_named_config.yml
 
-- name: "Restart Cloudflared service"
+- name: Restart Cloudflared service
   ansible.builtin.systemd:
-    name: "cloudflared-proxy-dns.service"
-    state: "restarted"
+    name: cloudflared-proxy-dns.service
+    state: restarted
     enabled: true

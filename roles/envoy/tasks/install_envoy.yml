@@ -1,0 +1,78 @@
+- name: Install Envoy prerequsites
+  ansible.builtin.apt:
+    name: libc6
+    state: present
+
+- name: Install Envoy binary
+  ansible.builtin.get_url:
+    url: https://github.com/envoyproxy/envoy/releases/download/v1.29.1/envoy-1.29.1-linux-x86_64
+    dest: /usr/local/bin/envoy
+    mode: "0755"
+    owner: root
+    group: root
+    checksum: sha256:fa11981db71e9baeb0099a7a56e3055a13f98f0e8f6513b30f70abc9e6d503f3
+
+- name: Create Envoy group
+  ansible.builtin.group:
+    name: envoy
+    state: present
+    system: true
+
+- name: Create Envoy user
+  ansible.builtin.user:
+    name: envoy
+    group: envoy
+    home: /nonexistent
+    create_home: false
+    move_home: false
+    shell: /bin/false
+    state: present
+    system: true
+    comment: envoy user
+
+- name: Update Envoy service unit
+  ansible.builtin.template:
+    group: root
+    owner: root
+    mode: "0644"
+    dest: /etc/systemd/system/envoy.service
+    src: envoy.service.j2
+  notify:
+    - Reload Envoy systemd daemon configuration
+
+- name: Update Envoy configuration directory
+  ansible.builtin.file:
+    group: root
+    owner: root
+    mode: "0755"
+    path: /etc/envoy
+    state: directory
+  notify:
+    - Restart Envoy service
+
+- name: Get capabilities for Envoy
+  ansible.builtin.command:
+    cmd: getcap /usr/local/bin/envoy
+  changed_when: false
+  register: cap
+
+- name: Allow Envoy to bind to priveleged ports
+  ansible.builtin.command:
+    cmd: setcap 'cap_net_bind_service=+ep' /usr/local/bin/envoy
+  when: cap.stdout != "/usr/local/bin/envoy cap_net_bind_service=ep"
+  changed_when: true
+  notify:
+    - Restart Envoy service
+
+- name: Update Envoy configuration file
+  ansible.builtin.template:
+    group: root
+    owner: root
+    mode: "0644"
+    dest: /etc/envoy/envoy.yaml
+    src: envoy.yaml.j2
+  notify:
+    - Restart Envoy service
+
+- name: Flush handlers before continuing
+  ansible.builtin.meta: flush_handlers

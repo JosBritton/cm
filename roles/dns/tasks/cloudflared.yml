@@ -1,21 +1,20 @@
-# vim: ft=yaml.ansible
-- name: "Install Cloudflared"
+- name: Install Cloudflared
   ansible.builtin.apt:
-    deb: "https://github.com/cloudflare/cloudflared/releases/download/2024.6.1/cloudflared-linux-amd64.deb"
+    deb: https://github.com/cloudflare/cloudflared/releases/download/2024.6.1/cloudflared-linux-amd64.deb
     state: present
-  notify: "Restart Cloudflared service"
+  notify: Restart Cloudflared service
 
-- name: "Replace Cloudflared service file"
+- name: Replace Cloudflared service file
   ansible.builtin.template:
-    dest: "/etc/systemd/system/cloudflared-proxy-dns.service"
-    src: "cloudflared-proxy-dns.service.j2"
+    dest: /etc/systemd/system/cloudflared-proxy-dns.service
+    src: cloudflared-proxy-dns.service.j2
     mode: "0644"
-    owner: "root"
-    group: "root"
-  notify: "Restart Cloudflared service"
+    owner: root
+    group: root
+  notify: Restart Cloudflared service
 
-- name: "Enable cloudflared service and wait for it to be active"
+- name: Enable cloudflared service and wait for it to be active
   ansible.builtin.systemd:
-    name: "cloudflared-proxy-dns.service"
+    name: cloudflared-proxy-dns.service
     enabled: true
-    state: "started"
+    state: started

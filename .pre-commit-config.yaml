@@ -1,5 +1,5 @@
 repos:
-  - repo: "https://github.com/ansible/ansible-lint"
-    rev: "v24.2.0"
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v24.2.0
     hooks:
-      - id: "ansible-lint"
+      - id: ansible-lint

@@ -1,12 +1,11 @@
-# vim: ft=yaml.ansible
-- name: "Restart Wireguard-quick service"
+- name: Restart Wireguard-quick service
   ansible.builtin.systemd:
-    name: "wg-quick@{{ bt_wg_interface }}.service"
-    state: "restarted"
+    name: wg-quick@{{ bt_wg_interface }}.service
+    state: restarted
 
-- name: "Restart qBittorrent service"
+- name: Restart qBittorrent service
   ansible.builtin.systemd:
-    name: "qbittorrent-nox.service"
+    name: qbittorrent-nox.service
     daemon_reload: true
-    state: "restarted"
+    state: restarted
     enabled: true

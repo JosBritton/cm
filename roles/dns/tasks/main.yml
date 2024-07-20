@@ -1,80 +1,79 @@
-# vim: ft=yaml.ansible
-- name: "Perform inventory validation for role"
+- name: Perform inventory validation for role
   ansible.builtin.include_tasks:
-    file: "validate.yml"
+    file: validate.yml
 
-- name: "Template resolv.conf"
+- name: Template resolv.conf
   ansible.builtin.template:
     mode: "0644"
-    owner: "root"
-    group: "root"
-    src: "resolv.conf.j2"
-    dest: "/etc/resolv.conf"
+    owner: root
+    group: root
+    src: resolv.conf.j2
+    dest: /etc/resolv.conf
 
-- name: "Install Bind9 server and test utilities"
+- name: Install Bind9 server and test utilities
   ansible.builtin.apt:
     name:
-      - "bind9"
-      - "bind9-dnsutils"
-    state: "present"
+      - bind9
+      - bind9-dnsutils
+    state: present
 
-- name: "Install DNS-Over-Https stub resolver (cloudflared)"
+- name: Install DNS-Over-Https stub resolver (cloudflared)
   when: not dns_is_auth
   ansible.builtin.include_tasks:
     file: cloudflared.yml
 
-- name: "Include alternate standby and active multi-master configs"
-  when: (not dns_debug) and dns_is_auth
+- name: Include alternate standby and active multi-master configs
+  when: dns_is_auth
   ansible.builtin.template:
-    src: "named.conf.options.j2"
+    src: named.conf.options.j2
     dest: "{{ namedconf.dest }}"
-    owner: "root"
-    group: "bind"
+    owner: root
+    group: bind
     mode: "0644"
   vars:
     dns_is_primary: "{{ namedconf.active }}"
   loop:
     - active: true
-      dest: "/etc/bind/named.conf.active"
+      dest: /etc/bind/named.conf.active
     - active: false
-      dest: "/etc/bind/named.conf.standby"
+      dest: /etc/bind/named.conf.standby
   loop_control:
-    loop_var: "namedconf"
+    loop_var: namedconf
 
-- name: "Replace Bind9 zone update key"
+- name: Replace Bind9 zone update key
   ansible.builtin.include_tasks:
-    file: "updatekey.yml"
+    file: updatekey.yml
   when: dns_is_primary
 
-- name: "Replace Bind9 server configuration"
+- name: Replace Bind9 server configuration
   ansible.builtin.include_tasks:
-    file: "updatenamed.yml"
+    file: updatenamed.yml
 
-- name: "Update static Bind9 zonefile"
+- name: Update static Bind9 zonefile
   ansible.builtin.include_tasks:
-    file: "updatezone.yml"
+    file: updatezone.yml
   loop: "{{ dns_auth_zones | flatten(levels=1) }}"
   loop_control:
     label: "{{ zone.zone_fqdn }}"
-    loop_var: "zone"
+    loop_var: zone
   when: dns_is_primary and (not zone.dynamic)
 
-- name: "Enable and start Bind9 service"
+- name: Enable and start Bind9 service
   ansible.builtin.systemd:
-    name: "named.service"
-    state: "started"
+    name: named.service
+    state: started
     enabled: true
 
-- name: "Initialize file for dynamic zone on disk"
+- name: Initialize file for dynamic zone on disk
   ansible.builtin.include_tasks:
-    file: "initdynamiczonefile.yml"
+    file: initdynamiczonefile.yml
   loop: "{{ dns_auth_zones | flatten(levels=1) }}"
   loop_control:
     label: "{{ initzone.zone_fqdn }}"
-    loop_var: "initzone"
+    loop_var: initzone
   when: dns_is_primary and initzone.dynamic
 
-- name: "Update dynamic Bind9 zones on primary servers"
+- name: Update dynamic Bind9 zones on primary servers
   ansible.builtin.include_tasks:
-    file: "updatedynamiczone.yml"
+    file: updatedynamiczone.yml
   when: dns_is_primary

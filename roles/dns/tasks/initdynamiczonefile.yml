@@ -1,41 +1,40 @@
-# vim: ft=yaml.ansible
-- name: "Get stats of raw zonefile"
+- name: Get stats of raw zonefile
   ansible.builtin.stat:
-    path: "/var/lib/bind/db.{{ initzone.zone_fqdn }}"
-  register: "raw"
+    path: /var/lib/bind/db.{{ initzone.zone_fqdn }}
+  register: raw
 
-- name: "Write placeholder zonefile"
+- name: Write placeholder zonefile
   ansible.builtin.template:
-    src: "db.zone.j2"
-    dest: "/var/lib/bind/db.{{ initzone.zone_fqdn }}.text"
-    owner: "bind"
-    group: "root"
+    src: db.zone.j2
+    dest: /var/lib/bind/db.{{ initzone.zone_fqdn }}.text
+    owner: bind
+    group: root
     mode: "0644"
     force: false  # do not update if file already exists!
-  register: "placeholder"
+  register: placeholder
   vars:
     data: { soa: { serial: 32 } }
     zone: "{{ initzone | combine(data, list_merge='append', recursive=true) }}"
 
-- name: "Convert placeholder to raw format"
+- name: Convert placeholder to raw format
   ansible.builtin.command:
     argv:
-      - "named-compilezone"
-      - "-f"
-      - "text"
-      - "-F"
-      - "raw"
-      - "-o"
-      - "/var/lib/bind/db.{{ initzone.zone_fqdn }}"
+      - named-compilezone
+      - -f
+      - text
+      - -F
+      - raw
+      - -o
+      - /var/lib/bind/db.{{ initzone.zone_fqdn }}
       - "{{ initzone.zone_fqdn }}"
-      - "/var/lib/bind/db.{{ initzone.zone_fqdn }}.text"
-    creates: "/var/lib/bind/db.{{ initzone.zone_fqdn }}"
-  when: "(raw.stat.isreg is not defined) or (not raw.stat.isreg)"
-  register: "raw_comp"
+      - /var/lib/bind/db.{{ initzone.zone_fqdn }}.text
+    creates: /var/lib/bind/db.{{ initzone.zone_fqdn }}
+  when: (raw.stat.isreg is not defined) or (not raw.stat.isreg)
+  register: raw_comp
 
-- name: "Reload zone"
+- name: Reload zone
   ansible.builtin.command:
-    cmd: "rndc reload {{ initzone.zone_fqdn }}"
+    cmd: rndc reload {{ initzone.zone_fqdn }}
   when: raw_comp is changed
   tags:
-    - "skip_ansible_lint"
+    - skip_ansible_lint

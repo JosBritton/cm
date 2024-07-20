@@ -1,25 +1,24 @@
-# vim: ft=yaml.ansible
-- name: "Get stats of mount point"
+- name: Get stats of mount point
   ansible.builtin.stat:
     path: "{{ mount.mount_point.path }}"
-  register: "mountpoint"
+  register: mountpoint
 
-- name: "Create mount point"
+- name: Create mount point
   ansible.builtin.file:
     path: "{{ mount.mount_point.path }}"
     owner: "{{ mount.mount_point.owner }}"
     group: "{{ mount.mount_point.group }}"
-    state: "directory"
+    state: directory
     mode: "{{ mount.mount_point.mode }}"
-  when: "not mountpoint.stat.exists"
+  when: not mountpoint.stat.exists
 
-- name: "Configure mount information in fstab"
+- name: Configure mount information in fstab
   ansible.builtin.lineinfile:
-    path: "/etc/fstab"
-    regexp: "^{{ mount.fstab }}$"
+    path: /etc/fstab
+    regexp: ^{{ mount.fstab }}$
     line: "{{ mount.fstab }}"
     create: true
-    owner: "root"
-    group: "root"
+    owner: root
+    group: root
     mode: "0644"
-  notify: "Restart qBittorrent service"
+  notify: Restart qBittorrent service

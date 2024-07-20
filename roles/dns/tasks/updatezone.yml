@@ -1,58 +1,57 @@
-# vim: ft=yaml.ansible
-- name: "Update static Bind9 zonefile, "
+- name: Update static Bind9 zonefile,
   block:
-    - name: "Write zone file on disk"
+    - name: Write zone file on disk
       ansible.builtin.template:
-        src: "db.zone.j2"
-        dest: "/var/lib/bind/db.{{ zone.zone_fqdn }}"
-        owner: "root"
-        group: "root"
+        src: db.zone.j2
+        dest: /var/lib/bind/db.{{ zone.zone_fqdn }}
+        owner: root
+        group: root
         mode: "0644"
         force: true
         backup: true
-      register: "zone_file"
+      register: zone_file
 
-    - name: "Reload zone"
+    - name: Reload zone
       ansible.builtin.command:
-        cmd: "rndc reload '{{ zone.zone_fqdn }}'"
+        cmd: rndc reload '{{ zone.zone_fqdn }}'
       when: zone_file is changed
       changed_when: true
       tags:
-        - "skip_ansible_lint"
+        - skip_ansible_lint
 
-    - name: "Get zone status"
+    - name: Get zone status
       ansible.builtin.command:
-        cmd: "rndc zonestatus '{{ zone.zone_fqdn }}'"
+        cmd: rndc zonestatus '{{ zone.zone_fqdn }}'
       changed_when: false
   rescue:
-    - name: "Restore previous configuration"
+    - name: Restore previous configuration
       ansible.builtin.copy:
         remote_src: true
         src: "{{ zone_file.backup_file }}"
-        dest: "/var/lib/bind/db.{{ zone.zone_fqdn }}"
-        owner: "root"
-        group: "root"
+        dest: /var/lib/bind/db.{{ zone.zone_fqdn }}
+        owner: root
+        group: root
         mode: "0644"
       when: zone_file is changed
       tags:
-        - "skip_ansible_lint"
+        - skip_ansible_lint
 
     # rndc not active in-case of server error
-    - name: "Restart service"
+    - name: Restart service
       ansible.builtin.systemd:
-        name: "named.service"
-        state: "restarted"
+        name: named.service
+        state: restarted
       when: zone_file is changed
       tags:
-        - "skip_ansible_lint"
+        - skip_ansible_lint
 
-    - name: "Get zone status"
+    - name: Get zone status
       ansible.builtin.command:
-        cmd: "rndc zonestatus '{{ zone.zone_fqdn }}'"
+        cmd: rndc zonestatus '{{ zone.zone_fqdn }}'
       changed_when: false
   always:
-    - name: "Remove temporary backup file"
+    - name: Remove temporary backup file
       ansible.builtin.file:
         path: "{{ zone_file.backup_file }}"
-        state: "absent"
+        state: absent
       when: zone_file.backup_file is defined

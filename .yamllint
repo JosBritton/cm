@@ -1,66 +1,34 @@
-locale: "en_US.UTF-8"
-
-extends: "default"
-
+extends: default
 ignore-from-file:
-  - ".gitignore"
-
+  - .gitignore
 rules:
-  anchors: "enable"
+  document-start: disable
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+  line-length: disable
+  truthy:
+    ignore: .github/workflows/
   braces:
+    forbid: false
     min-spaces-inside: 0
     max-spaces-inside: 1
     min-spaces-inside-empty: 0
     max-spaces-inside-empty: 0
   brackets:
+    forbid: false
     min-spaces-inside: 1
     max-spaces-inside: 1
     min-spaces-inside-empty: 0
     max-spaces-inside-empty: 0
-  colons:
-    max-spaces-before: 0
-    max-spaces-after: 1
-  commas:
-    max-spaces-before: 0
-    min-spaces-after: 1
-    max-spaces-after: 1
+  octal-values: enable
   comments:
     min-spaces-from-content: 1
   comments-indentation: false
-  document-start:
-    present: false
-  document-end:
-    present: false
-  empty-lines:
-    max: 1
-    max-start: 0
-    max-end: 0
-  empty-values:
-    forbid-in-block-mappings: true
-    forbid-in-flow-mappings: true
-  float-values:
-    require-numeral-before-decimal: true
-  hyphens: "enable"
-  indentation:
-    spaces: 2
-    indent-sequences: true
-    check-multi-line-strings: false
-  key-duplicates: "enable"
-  key-ordering: "disable"
-  line-length:
-    max: 9999
-    allow-non-breakable-words: true
-  new-line-at-end-of-file: "enable"
-  new-lines: "enable"
-  octal-values: "enable"
+  empty-values: enable
+  float-values: enable
   quoted-strings:
-    level: "warning"
-    quote-type: "double"
-    required: false
-    allow-quoted-quotes: false
-  trailing-spaces: "enable"
-  truthy:
-    allowed-values:
-      - "true"
-      - "false"
-    check-keys: true
+    quote-type: double
+    required: only-when-needed
+    allow-quoted-quotes: true
