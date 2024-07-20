@@ -1,0 +1,7 @@
+# vim: ft=yaml.ansible
+- name: "Restart stork agent"
+  ansible.builtin.systemd_service:
+    name: "isc-stork-agent"
+    enabled: true
+    state: restarted
+  when: not first_time_start.changed

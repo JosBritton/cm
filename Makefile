@@ -1,7 +1,7 @@
 .SILENT:
 .DEFAULT_GOAL := all
 
-ROLES := dns dhcp lb bt
+ROLES := dns dhcp lb bt stork_agent
 
 ANSIBLE_HOST_KEY_CHECKING := "False"
 export ANSIBLE_HOST_KEY_CHECKING

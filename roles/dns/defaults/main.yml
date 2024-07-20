@@ -3,3 +3,5 @@ dns_is_primary: false
 dns_is_auth: false
 dns_debug: false
 dns_proxy_port: 1053
+dns_local_statistics_channel_http_port: 8080
+dns_rndc_control_port: 953

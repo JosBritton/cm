@@ -1,0 +1,10 @@
+stork_agent_host: "{{ inventory_hostname }}"
+stork_agent_port: 8002
+stork_agent_kea_exporter_address: "127.0.0.1"
+stork_agent_kea_exporter_port: 9547
+stork_agent_bind9_exporter_address: "127.0.0.1"
+stork_agent_bind9_exporter_port: 9119
+stork_agent_config: {}
+stork_agent_credentials: {}
+stork_agent_is_bind9: false
+stork_agent_is_kea_dhcp: false

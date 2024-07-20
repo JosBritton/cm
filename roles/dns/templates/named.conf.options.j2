@@ -82,3 +82,15 @@ zone "{{ zone.zone_fqdn }}" {
 {% endif %}
 };
 {% endfor %}
+
+include "/etc/bind/rndc.key";
+
+controls {
+    inet 127.0.0.1 port {{ dns_rndc_control_port }}
+        allow { 127.0.0.1; } keys { "rndc-key"; };
+};
+
+statistics-channels {
+    inet 127.0.0.1 port {{ dns_local_statistics_channel_http_port }}
+        allow { 127.0.0.1; };
+};
