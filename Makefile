@@ -12,7 +12,7 @@ all: notag
 .PHONY: notag
 notag: .venv/lock
 	. .venv/bin/activate && \
-	python3 -m ansible playbook -i inventory/hosts.yml site.yml
+	python3 -m ansible playbook -i inventory/hosts.yml --become --become-user=root site.yml
 
 .PHONY: install
 install: .git/hooks/pre-commit
@@ -20,12 +20,12 @@ install: .git/hooks/pre-commit
 .PHONY: verbose
 verbose: .venv/lock
 	. .venv/bin/activate && \
-	python3 -m ansible playbook -i inventory/hosts.yml site.yml -vvv
+	python3 -m ansible playbook -i inventory/hosts.yml --become --become-user=root site.yml -vvv
 
 .PHONY: $(ROLES)
 $(ROLES): .venv/lock
 	. .venv/bin/activate && \
-	python3 -m ansible playbook -i inventory/hosts.yml site.yml --tags "$@"
+	python3 -m ansible playbook -i inventory/hosts.yml --become --become-user=root site.yml --tags "$@"
 
 .PHONY: lint
 lint: .venv/lock .git/hooks/pre-commit
