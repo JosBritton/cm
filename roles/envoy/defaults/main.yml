@@ -1,2 +1,3 @@
 envoy_lb_is_primary: false
 envoy_lb_vri: 101
+envoy_install_keepalived: false
